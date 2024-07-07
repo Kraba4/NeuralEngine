@@ -4,7 +4,7 @@ namespace neural::game {
 class GameEngine {
 	bool m_isRunning{ false };
 public:
-	void init();
+	void initialize();
 	void processInputs();
 	void drawFrame();
 };

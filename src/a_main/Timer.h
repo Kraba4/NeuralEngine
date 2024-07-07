@@ -12,5 +12,6 @@ public:
 	double calculateDT(double a_currentTime);
 	bool   tryRecalculateFPS();
 	int    getLastFPS();
+	double getLastTime() const;
 };
 }

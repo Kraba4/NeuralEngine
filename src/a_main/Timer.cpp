@@ -30,4 +30,8 @@ bool Timer::tryRecalculateFPS() {
 int Timer::getLastFPS() {
 	return m_fps;
 }
+double Timer::getLastTime() const
+{
+	return m_lastTime;
+}
 }

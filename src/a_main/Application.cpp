@@ -28,16 +28,16 @@ void Application::settingGLFW() {
 	glfwSwapInterval(0);
 }
 
-void Application::init(std::string_view a_name, int a_width, int a_height)
+void Application::initialize(std::string_view a_name, int a_width, int a_height)
 {
 	settingGLFW();
 	m_window = glfwCreateWindow(a_width, a_height, a_name.data(), nullptr, nullptr);
 
 	m_game = std::make_shared<game::GameEngine>();
-	m_game->init();
+	m_game->initialize();
 
 	m_renderer = std::make_shared<graphics::DX12RenderEngine>();
-	m_renderer->init(glfwGetWin32Window(m_window), a_width, a_height);
+	m_renderer->initialize(glfwGetWin32Window(m_window), a_width, a_height);
 }
 
 void Application::mainLoop()
@@ -51,7 +51,7 @@ void Application::mainLoop()
 
 		double dt = timer.calculateDT(glfwGetTime());
 		m_game->processInputs();
-		m_renderer->render(dt);
+		m_renderer->render(timer);
 	}
 }
 

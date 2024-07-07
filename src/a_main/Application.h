@@ -17,7 +17,7 @@ class Application {
 	void settingGLFW();
 	void showFPS(Timer& a_timer);
 public:
-	void init(std::string_view a_name, int a_width, int a_height);
+	void initialize(std::string_view a_name, int a_width, int a_height);
 	void mainLoop();
 	~Application();
 };

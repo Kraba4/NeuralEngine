@@ -2,6 +2,7 @@
 #include <utils/Macros.h>
 
 #include <iostream>
+#include <cmath>
 
 namespace neural::graphics {
 void DX12RenderEngine::createDXGIFactory()
@@ -52,33 +53,53 @@ void DX12RenderEngine::createCommandAllocators()
 }
 void DX12RenderEngine::initialCommands()
 {
-	D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
-	transitionBarrier.pResource   = m_depthBuffer.Get();
-	transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-	transitionBarrier.StateAfter  = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	transitionBarrier.Subresource = 0;
+	{
+		D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
+		transitionBarrier.pResource = m_depthBuffer.Get();
+		transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+		transitionBarrier.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		transitionBarrier.Subresource = 0;
 
-	D3D12_RESOURCE_BARRIER depthBufferBarrier;
-	depthBufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	depthBufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	depthBufferBarrier.Transition = transitionBarrier;
-	m_commandList->ResourceBarrier(1, &depthBufferBarrier);
+		D3D12_RESOURCE_BARRIER depthBufferBarrier;
+		depthBufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		depthBufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		depthBufferBarrier.Transition = transitionBarrier;
+		m_commandList->ResourceBarrier(1, &depthBufferBarrier);
+	}
+	{
+		D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
+		transitionBarrier.pResource = m_vertexInputBuffer.Get();
+		transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+		transitionBarrier.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+		transitionBarrier.Subresource = 0;
+
+		D3D12_RESOURCE_BARRIER bufferBarrier;
+		bufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		bufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		bufferBarrier.Transition = transitionBarrier;
+
+		m_commandList->ResourceBarrier(1, &bufferBarrier);
+
+		m_commandList->CopyBufferRegion(m_vertexInputBuffer.Get(), 0, m_uploadBuffer.Get(), 0, mesh.size() * sizeof(Vertex));
+	}
 }
 void DX12RenderEngine::createCommandListAndSendInitialCommands()
 {
 	DX_CALL(m_mainDevice->
 		CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
-	//initialCommands();
+	initialCommands();
 	m_commandList->Close();
 
-	//ID3D12CommandList* cmdLists[] = {m_commandList.Get()};
-	//m_commandQueue->ExecuteCommandLists(1, cmdLists);
+	ID3D12CommandList* cmdLists[] = {m_commandList.Get()};
+	m_commandQueue->ExecuteCommandLists(1, cmdLists);
+	m_commandQueue->Signal(m_framesFence.Get(), 1);
 }
-ComPtr<ID3D12DescriptorHeap> DX12RenderEngine::createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE a_type, uint32_t a_nDescriptors)
+ComPtr<ID3D12DescriptorHeap> DX12RenderEngine::createDescriptorHeap(uint32_t a_nDescriptors,
+	D3D12_DESCRIPTOR_HEAP_TYPE a_type, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc;
 	descriptorHeapDesc.NodeMask = 0;
-	descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	descriptorHeapDesc.Flags = flags;
 	descriptorHeapDesc.Type = a_type;
 	descriptorHeapDesc.NumDescriptors = a_nDescriptors;
 	ComPtr<ID3D12DescriptorHeap> heap;
@@ -87,10 +108,12 @@ ComPtr<ID3D12DescriptorHeap> DX12RenderEngine::createDescriptorHeap(D3D12_DESCRI
 }
 void DX12RenderEngine::createViews()
 {
-	m_rtvHeap = createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2);
-	m_dsvHeap = createDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
+	m_rtvHeap = createDescriptorHeap(2, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_dsvHeap = createDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	m_cbvHeap = createDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 	uint32_t rtvSize = m_mainDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	uint32_t dsvSize = m_mainDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	uint32_t cbvSize = m_mainDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStartHandler = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (int i = 0; i < k_nSwapChainBuffers; ++i) {
 		DX_CALL(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffers[i])));
@@ -98,7 +121,7 @@ void DX12RenderEngine::createViews()
 			                                 nullptr, D3D12_CPU_DESCRIPTOR_HANDLE(rtvHeapStartHandler.ptr + i * rtvSize));
 		
 	}
-	
+
 	D3D12_RESOURCE_DESC depthBufferDesc;
 	depthBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	depthBufferDesc.Alignment = 0;
@@ -129,7 +152,7 @@ void DX12RenderEngine::createViews()
 	D3D12_RESOURCE_DESC vertexInputBufferDesc;
 	vertexInputBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	vertexInputBufferDesc.Alignment = 0;
-	vertexInputBufferDesc.Width = 3 * sizeof(Vertex);
+	vertexInputBufferDesc.Width = mesh.size() * sizeof(Vertex);
 	vertexInputBufferDesc.Height = 1;
 	vertexInputBufferDesc.DepthOrArraySize = 1;
 	vertexInputBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -150,14 +173,54 @@ void DX12RenderEngine::createViews()
 		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(m_vertexInputBuffer.GetAddressOf())));
 	
 	m_vertexInputBufferView.BufferLocation = m_vertexInputBuffer->GetGPUVirtualAddress();
-	m_vertexInputBufferView.SizeInBytes = 3 * sizeof(Vertex);
+	m_vertexInputBufferView.SizeInBytes = mesh.size() * sizeof(Vertex);
 	m_vertexInputBufferView.StrideInBytes = sizeof(Vertex);
+
+	D3D12_HEAP_PROPERTIES heapProperties3;
+	heapProperties3.Type = D3D12_HEAP_TYPE_UPLOAD;
+	heapProperties3.CreationNodeMask = 1;
+	heapProperties3.VisibleNodeMask = 1;
+	heapProperties3.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProperties3.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+	DX_CALL(m_mainDevice->CreateCommittedResource(&heapProperties3, D3D12_HEAP_FLAG_NONE, &vertexInputBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(m_uploadBuffer.GetAddressOf())));
+
+	DX_CALL(m_uploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedVertexes)));
+	memcpy(m_mappedVertexes, mesh.data(), mesh.size() * sizeof(Vertex));
+	if (m_uploadBuffer != nullptr) {
+		m_uploadBuffer->Unmap(0, nullptr);
+	}
+
+	m_constantBuffer.initialize(m_mainDevice.Get(), 1, true, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 void DX12RenderEngine::createFence()
 {
-	m_mainDevice->CreateFence(m_currentFrame, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_framesFence));
+	m_mainDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_framesFence));
 }
-void DX12RenderEngine::init(HWND a_window, int a_width, int a_height)
+void DX12RenderEngine::initializePipelines()
+{
+	m_rootSignature.initialize(m_mainDevice.Get(),
+		{ {.parameterType = RootSignature::RootParameterType::DescriptorTable,
+			.descriptorTable = {.descriptorType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+								 .numDescriptors = 1,
+								 .baseShaderRegister = 0}
+			},
+		});
+
+	m_finalRenderPipeline.initialize(m_mainDevice.Get(), std::string_view("final_render"),
+		GraphicsPipeline::CreateInfo{
+			.rootSignature = m_rootSignature,
+			.inputLayout = {
+				{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+			},
+			.vertexShaderPath = "../resources/shaders/compiled/1.vs.cso",
+			.pixelShaderPath = "../resources/shaders/compiled/1.ps.cso",
+			.RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM},
+			.DSVFormat = DXGI_FORMAT_D32_FLOAT
+		});
+}
+void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
 {
 #if defined(_DEBUG)
 	{
@@ -169,15 +232,16 @@ void DX12RenderEngine::init(HWND a_window, int a_width, int a_height)
 	m_window       = a_window;
 	m_windowWidth  = a_width;
 	m_windowHeight = a_height;
-	m_currentFrame = 0; 
+	m_currentFrame = 2; 
 	createDXGIFactory();
 	createDevice();
 	createCommandQueue();
 	recreateSwapChain();
 	createViews();
 	createCommandAllocators();
-	createCommandListAndSendInitialCommands();
 	createFence();
+	createCommandListAndSendInitialCommands();
+	initializePipelines();
 	m_screenViewport.TopLeftX = 0;
 	m_screenViewport.TopLeftY = 0;
 	m_screenViewport.Width = static_cast<float>(m_windowWidth);
@@ -192,10 +256,8 @@ void DX12RenderEngine::init(HWND a_window, int a_width, int a_height)
 
 	m_eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 	for (int i = 0; i < k_nSwapChainBuffers; ++i) {
-		m_frameBufferFenceValue[i] = 0;
+		m_frameBufferFenceValue[i] = 1;
 	}
-
-	
 }
 void DX12RenderEngine::beginFrame()
 {
@@ -258,18 +320,35 @@ void DX12RenderEngine::endFrame()
 	//DX_CALL(m_mainDevice->GetDeviceRemovedReason());
 }
 
-void DX12RenderEngine::render(double a_dt)
+void DX12RenderEngine::render(const Timer& a_timer)
 {
+	float scale = std::fmod(static_cast<float>(a_timer.getLastTime()), 2.0f);
+	m_constantBuffer.setData(0, DirectX::XMFLOAT4X4(scale, 0, 0, 0,
+													 0, scale, 0, 0,
+		                                             0, 0, 1, 0,
+		                                             0, 0, 0, 1));
 	beginFrame();
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
 	uint32_t rtvSize = m_mainDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	auto rtvHeapStartHandler = m_rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	auto dsvHeapStartHandler = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	float color[] = { 1, 0, 0, 1 };
+	float color[] = { 0, 0, 0, 1 };
 	auto currentBufferView = D3D12_CPU_DESCRIPTOR_HANDLE(rtvHeapStartHandler.ptr + currentFrameBufferIndex * rtvSize);
 	m_commandList->ClearRenderTargetView(currentBufferView,
 		color, 0, nullptr);
+	m_commandList->ClearDepthStencilView(dsvHeapStartHandler, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+	m_rootSignature.setAsRootSignature(m_commandList);
+	m_rootSignature.bindResources(m_commandList);
+	m_finalRenderPipeline.setAsPipeline(m_commandList);
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.Get() };
+	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart()); // ??? getView
+
+	m_commandList->IASetVertexBuffers(0, 1, &m_vertexInputBufferView);
+	m_commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_commandList->OMSetRenderTargets(1, &currentBufferView, true, &dsvHeapStartHandler);
+	m_commandList->DrawInstanced(mesh.size(), 1, 0, 0);
 	endFrame();
 }
 
