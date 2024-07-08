@@ -10,5 +10,5 @@ void VS(float2 iPos : POSITION,
 
 float4 PS(float4 oPos : SV_POSITION) : SV_Target
 {
-    return float4(0, 0.8, 0.3, 1);
+    return float4(gWorldViewProj[0][0], 0.8, 0.3, 1);
 }

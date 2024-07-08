@@ -2,10 +2,11 @@
 
 namespace neural::game {
 class GameEngine {
-	bool m_isRunning{ false };
 public:
 	void initialize();
 	void processInputs();
 	void drawFrame();
+private:
+	bool m_isRunning{ false };
 };
 }

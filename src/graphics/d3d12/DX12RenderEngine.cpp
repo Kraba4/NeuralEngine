@@ -5,45 +5,55 @@
 #include <cmath>
 
 namespace neural::graphics {
+
 void DX12RenderEngine::createDXGIFactory()
 {
 	DX_CALL(CreateDXGIFactory2(0, IID_PPV_ARGS(&m_dxgiFactory)));
 }
+
 void DX12RenderEngine::createDevice()
 {
 	DX_CALL(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_mainDevice)));
 }
+
 void DX12RenderEngine::recreateSwapChain()
 {
 	m_swapChain.Reset();
 
-	DXGI_SWAP_CHAIN_DESC swapChainDesc;
-	swapChainDesc.OutputWindow = m_window;
-	swapChainDesc.Windowed = true;
-	swapChainDesc.BufferDesc.Width = m_windowWidth;
-	swapChainDesc.BufferDesc.Height = m_windowHeight;
-	swapChainDesc.BufferDesc.RefreshRate = { .Numerator = 60, .Denominator = 1 };
-	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	swapChainDesc.SampleDesc = { .Count = 1, .Quality = 0 };
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	DXGI_SWAP_CHAIN_DESC swapChainDesc = {
+		.BufferDesc = { .Width = m_windowWidth,
+						.Height = m_windowHeight,
+						.RefreshRate = {.Numerator = 60, .Denominator = 1 },
+						.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+						.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
+						.Scaling = DXGI_MODE_SCALING_UNSPECIFIED
+					  },
+		.SampleDesc = { .Count = 1, 
+		                .Quality = 0
+	                  },
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = k_nSwapChainBuffers,
+		.OutputWindow = m_window,
+		.Windowed = true,
+		.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+		.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+	};
 
 	DX_CALL(m_dxgiFactory->CreateSwapChain(m_commandQueue.Get(), &swapChainDesc, &m_swapChain));
 }
+
 void DX12RenderEngine::createCommandQueue()
 {
-	D3D12_COMMAND_QUEUE_DESC commandQueueDesc;
-	commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	commandQueueDesc.Priority = 0;
-	commandQueueDesc.NodeMask = 0;
-	commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+	D3D12_COMMAND_QUEUE_DESC commandQueueDesc = {
+		.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+		.Priority = 0,
+		.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
+		.NodeMask = 0
+	};
 
 	DX_CALL(m_mainDevice->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&m_commandQueue)));
 }
+
 void DX12RenderEngine::createCommandAllocators()
 {
 	for (int i = 0; i < k_nSwapChainBuffers; ++i) {
@@ -51,42 +61,24 @@ void DX12RenderEngine::createCommandAllocators()
 			CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i])));
 	}
 }
+
 void DX12RenderEngine::initialCommands()
 {
-	{
-		D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
-		transitionBarrier.pResource = m_depthBuffer.Get();
-		transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-		transitionBarrier.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		transitionBarrier.Subresource = 0;
+	CD3DX12_RESOURCE_BARRIER barriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(m_depthBuffer.Get(), 
+		                                      D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+		CD3DX12_RESOURCE_BARRIER::Transition(m_vertexInputBuffer.Get(),
+											  D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST)
+	};
+	m_commandList->ResourceBarrier(std::size(barriers), barriers);
 
-		D3D12_RESOURCE_BARRIER depthBufferBarrier;
-		depthBufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		depthBufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		depthBufferBarrier.Transition = transitionBarrier;
-		m_commandList->ResourceBarrier(1, &depthBufferBarrier);
-	}
-	{
-		D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
-		transitionBarrier.pResource = m_vertexInputBuffer.Get();
-		transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-		transitionBarrier.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-		transitionBarrier.Subresource = 0;
-
-		D3D12_RESOURCE_BARRIER bufferBarrier;
-		bufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		bufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		bufferBarrier.Transition = transitionBarrier;
-
-		m_commandList->ResourceBarrier(1, &bufferBarrier);
-
-		m_commandList->CopyBufferRegion(m_vertexInputBuffer.Get(), 0, m_uploadBuffer.Get(), 0, mesh.size() * sizeof(Vertex));
-	}
+	m_commandList->CopyBufferRegion(m_vertexInputBuffer.Get(), 0, m_uploadBuffer.getResource(), 0, mesh.size() * sizeof(Vertex));
 }
+
 void DX12RenderEngine::createCommandListAndSendInitialCommands()
 {
-	DX_CALL(m_mainDevice->
-		CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+	DX_CALL(m_mainDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+		                   m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 	initialCommands();
 	m_commandList->Close();
 
@@ -94,18 +86,21 @@ void DX12RenderEngine::createCommandListAndSendInitialCommands()
 	m_commandQueue->ExecuteCommandLists(1, cmdLists);
 	m_commandQueue->Signal(m_framesFence.Get(), 1);
 }
+
 ComPtr<ID3D12DescriptorHeap> DX12RenderEngine::createDescriptorHeap(uint32_t a_nDescriptors,
 	D3D12_DESCRIPTOR_HEAP_TYPE a_type, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
-	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc;
-	descriptorHeapDesc.NodeMask = 0;
-	descriptorHeapDesc.Flags = flags;
-	descriptorHeapDesc.Type = a_type;
-	descriptorHeapDesc.NumDescriptors = a_nDescriptors;
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
+		.Type = a_type,
+		.NumDescriptors = a_nDescriptors,
+		.Flags = flags,
+		.NodeMask = 0,
+	};
 	ComPtr<ID3D12DescriptorHeap> heap;
 	DX_CALL(m_mainDevice->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&heap)));
 	return heap;
 }
+
 void DX12RenderEngine::createViews()
 {
 	m_rtvHeap = createDescriptorHeap(2, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -176,28 +171,17 @@ void DX12RenderEngine::createViews()
 	m_vertexInputBufferView.SizeInBytes = mesh.size() * sizeof(Vertex);
 	m_vertexInputBufferView.StrideInBytes = sizeof(Vertex);
 
-	D3D12_HEAP_PROPERTIES heapProperties3;
-	heapProperties3.Type = D3D12_HEAP_TYPE_UPLOAD;
-	heapProperties3.CreationNodeMask = 1;
-	heapProperties3.VisibleNodeMask = 1;
-	heapProperties3.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	heapProperties3.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-
-	DX_CALL(m_mainDevice->CreateCommittedResource(&heapProperties3, D3D12_HEAP_FLAG_NONE, &vertexInputBufferDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(m_uploadBuffer.GetAddressOf())));
-
-	DX_CALL(m_uploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedVertexes)));
-	memcpy(m_mappedVertexes, mesh.data(), mesh.size() * sizeof(Vertex));
-	if (m_uploadBuffer != nullptr) {
-		m_uploadBuffer->Unmap(0, nullptr);
-	}
+	m_uploadBuffer.initialize(m_mainDevice.Get(), mesh.size(), false);
+	m_uploadBuffer.uploadData(mesh.data());
 
 	m_constantBuffer.initialize(m_mainDevice.Get(), 1, true, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
 }
+
 void DX12RenderEngine::createFence()
 {
 	m_mainDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_framesFence));
 }
+
 void DX12RenderEngine::initializePipelines()
 {
 	m_rootSignature.initialize(m_mainDevice.Get(),
@@ -215,11 +199,12 @@ void DX12RenderEngine::initializePipelines()
 				{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 			},
 			.vertexShaderPath = "../resources/shaders/compiled/1.vs.cso",
-			.pixelShaderPath = "../resources/shaders/compiled/1.ps.cso",
+			.pixelShaderPath  = "../resources/shaders/compiled/1.ps.cso",
 			.RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM},
 			.DSVFormat = DXGI_FORMAT_D32_FLOAT
 		});
 }
+
 void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
 {
 #if defined(_DEBUG)
@@ -259,6 +244,7 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
 		m_frameBufferFenceValue[i] = 1;
 	}
 }
+
 void DX12RenderEngine::beginFrame()
 {
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
@@ -277,37 +263,18 @@ void DX12RenderEngine::beginFrame()
 
 	auto& currentBuffer = m_swapChainBuffers[currentFrameBufferIndex];
 
-	D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
-	transitionBarrier.pResource = currentBuffer.Get();
-	transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	transitionBarrier.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	transitionBarrier.Subresource = 0;
-
-	D3D12_RESOURCE_BARRIER bufferBarrier;
-	bufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	bufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	bufferBarrier.Transition = transitionBarrier;
-	m_commandList->ResourceBarrier(1, &bufferBarrier);
-
-	m_commandList->RSSetViewports(1, &m_screenViewport);
-	m_commandList->RSSetScissorRects(1, &m_screenScissor);
+	auto currentBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(currentBuffer.Get(),
+		                                            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_commandList->ResourceBarrier(1, &currentBufferBarrier);
 }
 
 void DX12RenderEngine::endFrame()
 {
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
 	auto& currentBuffer = m_swapChainBuffers[currentFrameBufferIndex];
-	D3D12_RESOURCE_TRANSITION_BARRIER transitionBarrier;
-	transitionBarrier.pResource = currentBuffer.Get();
-	transitionBarrier.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	transitionBarrier.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	transitionBarrier.Subresource = 0;
-
-	D3D12_RESOURCE_BARRIER bufferBarrier;
-	bufferBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	bufferBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	bufferBarrier.Transition = transitionBarrier;
-	m_commandList->ResourceBarrier(1, &bufferBarrier);
+	auto currentBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(currentBuffer.Get(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_commandList->ResourceBarrier(1, &currentBufferBarrier);
 	DX_CALL(m_commandList->Close());
 	ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(1, cmdLists);
@@ -323,10 +290,10 @@ void DX12RenderEngine::endFrame()
 void DX12RenderEngine::render(const Timer& a_timer)
 {
 	float scale = std::fmod(static_cast<float>(a_timer.getLastTime()), 2.0f);
-	m_constantBuffer.setData(0, DirectX::XMFLOAT4X4(scale, 0, 0, 0,
-													 0, scale, 0, 0,
-		                                             0, 0, 1, 0,
-		                                             0, 0, 0, 1));
+	m_constantBuffer.uploadData(0, DirectX::XMFLOAT4X4(scale, 0, 0, 0,
+													   0, scale, 0, 0,
+		                                               0, 0, 1, 0,
+		                                               0, 0, 0, 1));
 	beginFrame();
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
 	uint32_t rtvSize = m_mainDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -334,6 +301,8 @@ void DX12RenderEngine::render(const Timer& a_timer)
 	auto dsvHeapStartHandler = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	float color[] = { 0, 0, 0, 1 };
 	auto currentBufferView = D3D12_CPU_DESCRIPTOR_HANDLE(rtvHeapStartHandler.ptr + currentFrameBufferIndex * rtvSize);
+	m_commandList->RSSetViewports(1, &m_screenViewport);
+	m_commandList->RSSetScissorRects(1, &m_screenScissor);
 	m_commandList->ClearRenderTargetView(currentBufferView,
 		color, 0, nullptr);
 	m_commandList->ClearDepthStencilView(dsvHeapStartHandler, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -360,6 +329,7 @@ void DX12RenderEngine::shutdown()
 	}
 	m_mainDevice->RemoveDevice(); // костыль чтобы не выбрасывались исключения
 }
+
 void DX12RenderEngine::flushFrameBuffers()
 {
 	for (int i = 0; i < k_nSwapChainBuffers; ++i) {

@@ -11,6 +11,6 @@
 #include <vector>
 
 using Microsoft::WRL::ComPtr;
-namespace neural::graphics::utils {
+namespace neural::utils {
 std::vector<char> loadBinary(std::string a_filename);
 }

@@ -6,8 +6,8 @@
 namespace neural::graphics {
 class IRenderEngine {
 public:
-	virtual void initialize(HWND a_window, int a_width, int a_heigh)            = 0;
-	virtual void render(const Timer& timer)          = 0;
-	virtual void shutdown()        = 0;
+	virtual void initialize(HWND a_window, int a_width, int a_heigh) = 0;
+	virtual void render(const Timer& timer)                          = 0;
+	virtual void shutdown()                                          = 0;
 };
 }

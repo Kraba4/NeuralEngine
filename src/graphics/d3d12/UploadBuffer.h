@@ -5,15 +5,18 @@
 #include <wrl.h>
 #include <d3dx12.h>
 
+namespace neural::graphics {
+
 template<typename T>
 class UploadBuffer
 {
 public:
 	UploadBuffer() {};
 	void initialize(ID3D12Device* a_device, UINT a_elementCount, bool a_isConstantBuffer,
-		D3D12_CPU_DESCRIPTOR_HANDLE a_view)
+		D3D12_CPU_DESCRIPTOR_HANDLE a_cpuView = D3D12_CPU_DESCRIPTOR_HANDLE(0))
 	{
-		m_view = a_view;
+		m_cpuView = a_cpuView;
+		m_elementCount = a_elementCount;
 		m_isConstantBuffer = a_isConstantBuffer;
 		m_elementByteSize = sizeof(T);
 		// Constant buffer elements need to be multiples of 256 bytes.
@@ -46,36 +49,52 @@ public:
 		int boxCBufIndex = 0;
 		cbAddress += boxCBufIndex * m_elementByteSize;
 
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		cbvDesc.BufferLocation = cbAddress;
-		cbvDesc.SizeInBytes = m_elementByteSize;
-		a_device->CreateConstantBufferView(
-			&cbvDesc,
-			m_view);
+		if (a_isConstantBuffer) { // ???
+			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+			cbvDesc.BufferLocation = cbAddress;
+			cbvDesc.SizeInBytes = m_elementByteSize;
+			a_device->CreateConstantBufferView(
+				&cbvDesc,
+				m_cpuView);
+		}
 	}
+
 	UploadBuffer(const UploadBuffer&) = delete;
 	UploadBuffer& operator=(const UploadBuffer&) = delete;
+
 	~UploadBuffer() {
 		if (m_uploadBuffer != nullptr)
 			m_uploadBuffer->Unmap(0, nullptr);
 		m_mappedData = nullptr;
 	}
+
 	ID3D12Resource* getResource() const {
 		return m_uploadBuffer.Get();
 	}
-	D3D12_CPU_DESCRIPTOR_HANDLE getView() const {
-		return m_view;
-	}
-	void setData(int a_elementIndex, const T& a_data) {
+	//D3D12_CPU_DESCRIPTOR_HANDLE getView() const {
+	//	return m_view;
+	//}
+
+	void uploadData(int a_elementIndex, const T& a_data) {
 		memcpy(&m_mappedData[a_elementIndex * m_elementByteSize], &a_data, sizeof(T));
 	}
+
+	void uploadData(T* a_data) {
+		assert(!m_isConstantBuffer);
+		memcpy(m_mappedData, a_data, m_elementCount * sizeof(T));
+	}
+
 private:
 	uint32_t CalcConstantBufferByteSize(uint32_t a_byteSize) {
 		return (a_byteSize + 255) & ~255;
 	}
-	D3D12_CPU_DESCRIPTOR_HANDLE m_view;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE m_view;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuView;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer;
 	BYTE* m_mappedData = nullptr;
 	UINT m_elementByteSize = 0;
+	uint32_t m_elementCount = 0;
 	bool m_isConstantBuffer = false;
 };
+}

@@ -1,6 +1,6 @@
 #include "Utils.h"
 
-std::vector<char> neural::graphics::utils::loadBinary(std::string a_filename)
+std::vector<char> neural::utils::loadBinary(std::string a_filename)
 {
 	std::ifstream fin(a_filename, std::ios::binary);
 
