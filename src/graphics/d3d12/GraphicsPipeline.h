@@ -4,9 +4,7 @@
 #include <utils/Utils.h>
 #include "RootSignature.h"
 
-#include <d3d12.h>
-#include <wrl.h>
-#include <d3dx12.h>
+#include "CommonGraphicsHeaders.h"
 
 #include <string_view>
 #include <vector>

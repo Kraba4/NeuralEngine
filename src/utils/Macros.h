@@ -29,3 +29,9 @@ __debugbreak();                            \
 #else
 #define DX_CALL(line) line
 #endif
+
+#ifdef _DEBUG
+#define DEBUG_LINE(line) line
+#else
+#define DEBUG_OP(line) 
+#endif
