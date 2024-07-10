@@ -35,10 +35,10 @@ private:
 	void beginFrame();
 	void endFrame();
 	void initializePipelines();
-	ComPtr<ID3D12DescriptorHeap> createDescriptorHeap(uint32_t a_nDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE a_type,
-		D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
-	static constexpr int k_nSwapChainBuffers = 2;
+	static constexpr int k_nSwapChainBuffers = 3;
+	static_assert(k_nSwapChainBuffers >= 2);
+
 	HWND m_window;
 	uint32_t m_windowWidth;
 	uint32_t m_windowHeight;
@@ -48,11 +48,14 @@ private:
 	ComPtr<ID3D12GraphicsCommandList>  m_commandList;
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<IDXGISwapChain> m_swapChain;
-	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
-	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
-	ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
+	DescriptorHeap m_rtvHeap;
+	DescriptorHeap m_dsvHeap;
+	DescriptorHeap m_cbvHeap;
+	DescriptorHeap::Handle m_rtvHandles[k_nSwapChainBuffers];
+	DescriptorHeap::Handle m_dsvHandles[k_nSwapChainBuffers];
+	DescriptorHeap::Handle m_cbvHandles[k_nSwapChainBuffers];
 	ComPtr<ID3D12Resource> m_swapChainBuffers[k_nSwapChainBuffers];
-	ComPtr<ID3D12Resource> m_depthBuffer;
+	ComPtr<ID3D12Resource> m_depthBuffer[k_nSwapChainBuffers];
 	ComPtr<ID3D12Resource> m_vertexInputBuffer;
 	UploadBuffer<Vertex> m_uploadBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexInputBufferView;
@@ -66,6 +69,6 @@ private:
 								 {{0.f, 0.f}}, {{0.f, 1.f}}, {{0.5f, 0.f}} };
 	GraphicsPipeline m_finalRenderPipeline;
 	RootSignature m_rootSignature;
-	UploadBuffer<DirectX::XMFLOAT4X4> m_constantBuffer;
+	UploadBuffer<DirectX::XMFLOAT4X4> m_constantBuffer[k_nSwapChainBuffers];
 };
 }

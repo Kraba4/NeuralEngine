@@ -22,5 +22,6 @@ private:
 	GLFWwindow* m_window{ nullptr };
 	std::shared_ptr<game::GameEngine> m_game;
 	std::shared_ptr<graphics::IRenderEngine> m_renderer;
+
 };
 }

@@ -68,7 +68,7 @@ public:
 		m_mappedData = nullptr;
 	}
 
-	ID3D12Resource* getResource() const {
+	ID3D12Resource* getID3D12Resource() const {
 		return m_uploadBuffer.Get();
 	}
 	//D3D12_CPU_DESCRIPTOR_HANDLE getView() const {

@@ -10,11 +10,27 @@
 namespace neural {
 
 void Application::showFPS(Timer& a_timer) {
+	static int maxFPS = 0;
+	static int minFPS = INT_MAX;
+	static int sumFPS = 0;
+	static int countCheckFPS = 0;
+	static constexpr int NEED_CHECK_FPS = 20;
 	if (a_timer.tryRecalculateFPS())
 	{
-		std::stringstream strout;
-		strout << "FPS = " << a_timer.getLastFPS();
-		glfwSetWindowTitle(m_window, strout.str().c_str());
+		int fps = a_timer.getLastFPS();
+		maxFPS = max(maxFPS, fps);
+		minFPS = min(minFPS, fps);
+		sumFPS += a_timer.getLastFPS();
+		++countCheckFPS;
+		if (countCheckFPS >= NEED_CHECK_FPS) {
+			std::stringstream strout;
+			strout << "FPS: AVG = " << sumFPS / countCheckFPS << " MIN = " << minFPS << " MAX = " << maxFPS;
+			glfwSetWindowTitle(m_window, strout.str().c_str());
+			minFPS = INT_MAX;
+			maxFPS = 0;
+			sumFPS = 0;
+			countCheckFPS = 0;
+		}
 	}
 }
 

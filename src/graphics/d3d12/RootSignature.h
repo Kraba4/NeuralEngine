@@ -12,7 +12,6 @@
 using Microsoft::WRL::ComPtr;
 namespace neural::graphics {
 
-class GraphicsPipeline;
 class RootSignature {
 public:
 	enum class RootParameterType {
@@ -37,9 +36,8 @@ public:
 	void initialize(ID3D12Device* a_device, std::vector<RootParameter> slots);
 	void bindResources(ComPtr<ID3D12GraphicsCommandList> a_commandList);
 	void setAsRootSignature(ComPtr<ID3D12GraphicsCommandList> a_commandList);
-private:
-	friend class GraphicsPipeline;
 	ID3D12RootSignature* getID3D12RootSignature();
+private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 };
 }
