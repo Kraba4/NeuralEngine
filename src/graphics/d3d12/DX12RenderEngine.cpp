@@ -208,7 +208,6 @@ void DX12RenderEngine::initializePipelines()
 
 void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
 {
-
 	DEBUG_LINE(ComPtr<ID3D12Debug> debugController);
 	DEBUG_LINE(DX_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))));
 	DEBUG_LINE(debugController->EnableDebugLayer());

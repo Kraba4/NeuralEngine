@@ -14,7 +14,7 @@ void Application::showFPS(Timer& a_timer) {
 	static int minFPS = INT_MAX;
 	static int sumFPS = 0;
 	static int countCheckFPS = 0;
-	static constexpr int NEED_CHECK_FPS = 20;
+	static constexpr int NEED_CHECK_FPS = 150;
 	if (a_timer.tryRecalculateFPS())
 	{
 		int fps = a_timer.getLastFPS();

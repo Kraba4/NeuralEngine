@@ -33,13 +33,13 @@ __debugbreak();                            \
 #ifdef _DEBUG
 #define DEBUG_LINE(line) line
 #else
-#define DEBUG_OP(line) 
+#define DEBUG_LINE(line) 
 #endif
 
 #ifdef _DEBUG
 #define NAME_DX_OBJECT(object, name) object->SetName(name)
 #else
-#define NAME_DX_OBJECT(object, name) 
+#define NAME_DX_OBJECT(object, name)
 #endif
 
 #ifdef _DEBUG
@@ -50,5 +50,5 @@ t.append(std::to_wstring(index)); \
 object->SetName(t.c_str()); \
 } 
 #else
-#define NAME_DX_OBJECT(object, name) 
+#define NAME_DX_OBJECT_INDEXED(object, name, index) 
 #endif
