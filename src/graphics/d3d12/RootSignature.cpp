@@ -4,6 +4,7 @@ namespace neural::graphics {
 
 void RootSignature::initialize(ID3D12Device* a_device, std::vector<RootParameter> slots)
 {
+	assert(a_device);
 	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters(slots.size());
 	for (int i = 0; i < slots.size(); ++i) {
 		if (slots[i].parameterType == RootParameterType::DescriptorTable) {
@@ -35,6 +36,7 @@ void RootSignature::initialize(ID3D12Device* a_device, std::vector<RootParameter
 		serializedRootSig->GetBufferPointer(),
 		serializedRootSig->GetBufferSize(),
 		IID_PPV_ARGS(&m_rootSignature)));
+	DX_CALL(a_device->GetDeviceRemovedReason());
 }
 
 void RootSignature::bindResources(ComPtr<ID3D12GraphicsCommandList> a_commandList)
