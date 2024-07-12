@@ -1,12 +1,7 @@
 #include "Resource.h"
 
 namespace neural::graphics {
-void Resource::initialize(ID3D12Device* a_device, ID3D12Resource* a_resource)
-{
-	m_device = a_device;
-	m_resource = a_resource;
-}
-void Resource::initialize(ID3D12Device* a_device, const CreateInfo& a_info)
+void Resource::initializeInternal(ID3D12Device* a_device, const CreateInfo& a_info)
 {
 	assert(a_device);
 	m_device = a_device;
@@ -14,7 +9,7 @@ void Resource::initialize(ID3D12Device* a_device, const CreateInfo& a_info)
 		(a_info.resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
 			a_info.resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL));
 
-	auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(m_heapType);
 	if (a_info.heapInfo.has_value()) {
 		assert(a_info.heapInfo.value().heap != nullptr);  // failed looks like something wrong, 
 														  // however mb this condition need to add in above "if"
@@ -40,6 +35,7 @@ void Resource::initialize(ID3D12Device* a_device, const CreateInfo& a_info)
 
 void Resource::addRenderTargetView(std::string a_viewName, std::optional<D3D12_RENDER_TARGET_VIEW_DESC> a_rtvDesc)
 {
+	assert(a_viewName.find(k_metaNameRTV) == -1);
 	assert(m_resource.Get());
 	assert(m_rtvHeap);
 	a_viewName = k_metaNameRTV + std::to_string(0) + a_viewName;
@@ -54,6 +50,7 @@ void Resource::addRenderTargetView(std::string a_viewName, std::optional<D3D12_R
 
 void Resource::addShaderResourceView(std::string a_viewName, std::optional<D3D12_SHADER_RESOURCE_VIEW_DESC> a_srvDesc)
 {
+	assert(a_viewName.find(k_metaNameSRV) == -1);
 	assert(m_resource.Get());
 	assert(m_srvHeap);
 	a_viewName = k_metaNameSRV + a_viewName;
@@ -68,6 +65,7 @@ void Resource::addShaderResourceView(std::string a_viewName, std::optional<D3D12
 
 void Resource::addDepthStencilView(std::string a_viewName, std::optional<D3D12_DEPTH_STENCIL_VIEW_DESC> a_dsvDesc)
 {
+	assert(a_viewName.find(k_metaNameDSV) == -1);
 	assert(m_resource.Get());
 	assert(m_dsvHeap);
 	a_viewName = k_metaNameDSV + a_viewName;
@@ -77,6 +75,25 @@ void Resource::addDepthStencilView(std::string a_viewName, std::optional<D3D12_D
 	m_device->CreateDepthStencilView(m_resource.Get(),
 									 a_dsvDesc.has_value() ? &a_dsvDesc.value() : nullptr,
 									 handle.cpu);
+	m_handles[a_viewName] = handle;
+}
+void Resource::addConstantBufferView(std::string a_viewName, uint32_t a_elementSize)
+{
+	
+	assert(a_viewName.find(k_metaNameCBV) == -1);
+	assert(m_resource.Get());
+	assert(m_srvHeap);
+	a_viewName = k_metaNameCBV + a_viewName;
+	assert(!m_handles.contains(a_viewName));
+
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	cbvDesc.BufferLocation = m_resource.Get()->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = a_elementSize;
+
+	auto handle = m_srvHeap->allocate();
+	m_device->CreateConstantBufferView(&cbvDesc, handle.cpu);
+
 	m_handles[a_viewName] = handle;
 }
 }

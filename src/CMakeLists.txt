@@ -3,7 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/external)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 link_directories(${CMAKE_SOURCE_DIR}/external/glfw)
 
-add_executable(neural "a_main/main.cpp"  "graphics/IRenderEngine.h" "graphics/d3d12/DX12RenderEngine.h" "graphics/d3d12/DX12RenderEngine.cpp" "a_main/Application.h" "a_main/Application.cpp" "game/Game.h" "game/Game.cpp" "a_main/Timer.h" "a_main/Timer.cpp" "utils/Macros.h" "graphics/d3d12/GraphicsPipeline.h"  "utils/Utils.h" "utils/Utils.cpp" "graphics/d3d12/RootSignature.h" "graphics/d3d12/UploadBuffer.h" "graphics/d3d12/GPUBuffer.h"  "graphics/d3d12/RootSignature.cpp" "graphics/d3d12/GraphicsPipeline.cpp" "graphics/d3d12/CommonGraphicsHeaders.h" "graphics/d3d12/DescriptorHeap.cpp"    "graphics/d3d12/Resource.cpp" "graphics/d3d12/Resource.h")
+add_executable(neural "a_main/main.cpp"  "graphics/IRenderEngine.h" "graphics/d3d12/DX12RenderEngine.h" "graphics/d3d12/DX12RenderEngine.cpp" "a_main/Application.h" "a_main/Application.cpp" "game/Game.h" "game/Game.cpp" "a_main/Timer.h" "a_main/Timer.cpp" "utils/Macros.h" "graphics/d3d12/GraphicsPipeline.h"  "utils/Utils.h" "utils/Utils.cpp" "graphics/d3d12/RootSignature.h"  "graphics/d3d12/RootSignature.cpp" "graphics/d3d12/GraphicsPipeline.cpp" "graphics/d3d12/CommonGraphicsHeaders.h" "graphics/d3d12/DescriptorHeap.cpp"    "graphics/d3d12/Resource.cpp" "graphics/d3d12/Resource.h")
 
 set_target_properties(neural PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
