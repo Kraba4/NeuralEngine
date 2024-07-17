@@ -39,15 +39,6 @@ void RootSignature::initialize(ID3D12Device* a_device, std::vector<RootParameter
 	DX_CALL(a_device->GetDeviceRemovedReason());
 }
 
-void RootSignature::bindResources(ComPtr<ID3D12GraphicsCommandList> a_commandList)
-{
-}
-
-void RootSignature::setAsRootSignature(ComPtr<ID3D12GraphicsCommandList> a_commandList)
-{
-	a_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-}
-
 ID3D12RootSignature* RootSignature::getID3D12RootSignature()
 {
 	return m_rootSignature.Get();

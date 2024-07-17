@@ -27,8 +27,4 @@ void GraphicsPipeline::initialize(ID3D12Device* a_device, std::string_view a_deb
 
     DX_CALL(a_device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(m_pipeline.GetAddressOf())));
 }
-
-void GraphicsPipeline::setAsPipeline(ComPtr<ID3D12GraphicsCommandList> a_commandList) {
-    a_commandList->SetPipelineState(m_pipeline.Get());
-}
 }

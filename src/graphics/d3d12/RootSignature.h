@@ -32,10 +32,7 @@ public:
 		};
 	};
 
-	//RootSignature() {};
 	void initialize(ID3D12Device* a_device, std::vector<RootParameter> slots);
-	void bindResources(ComPtr<ID3D12GraphicsCommandList> a_commandList);
-	void setAsRootSignature(ComPtr<ID3D12GraphicsCommandList> a_commandList);
 	ID3D12RootSignature* getID3D12RootSignature();
 private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;

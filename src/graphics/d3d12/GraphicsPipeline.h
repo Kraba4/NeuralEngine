@@ -30,10 +30,7 @@ public:
         DXGI_SAMPLE_DESC sampleDesc = { .Count = 1, .Quality = 0 };
     };
 
-    //GraphicsPipeline() {};
-
     void initialize(ID3D12Device* a_device, std::string_view a_debugName, CreateInfo a_info);
-    void setAsPipeline(ComPtr<ID3D12GraphicsCommandList> a_commandList);
     ID3D12PipelineState* getID3D12Pipeline() {
         return m_pipeline.Get();
     }

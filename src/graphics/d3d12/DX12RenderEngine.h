@@ -54,14 +54,16 @@ private:
 	DescriptorHeap m_dsvHeap;
 	DescriptorHeap m_cbvHeap;
 
+	std::vector<Vertex> mesh = { {{-0.5f, 0.f}}, {{0.f, 0.f}}, {{0.f, -0.5f}},
+							 {{0.f, 0.f}}, {{0.f, 1.f}}, {{0.5f, 0.f}} };
+
 	DefaultResource m_screenTextures[k_nSwapChainBuffers];
 	DefaultResource m_depthTextures[k_nSwapChainBuffers];
 	ConstantBuffer<DirectX::XMFLOAT4X4> m_constantBuffer[k_nSwapChainBuffers];
 	DefaultResource m_vertexInputBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_vertexInputBufferView;
 
-	std::vector<Vertex> mesh = { {{-0.5f, 0.f}}, {{0.f, 0.f}}, {{0.f, -0.5f}},
-							 {{0.f, 0.f}}, {{0.f, 1.f}}, {{0.5f, 0.f}} };
+	GraphicsPipeline m_finalRenderPipeline;
+	RootSignature m_rootSignature;
 
 	ComPtr<ID3D12Fence> m_framesFence;
 	uint64_t m_currentFrame;
@@ -70,8 +72,5 @@ private:
 
 	D3D12_VIEWPORT m_screenViewport;
 	D3D12_RECT m_screenScissor;
-
-	GraphicsPipeline m_finalRenderPipeline;
-	RootSignature m_rootSignature;
 };
 }

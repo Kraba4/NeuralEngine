@@ -17,6 +17,6 @@ project (NeuralEngine CXX)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
+add_compile_definitions(D3D12_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/src/graphics/d3d12")
 # Включите подпроекты.
 add_subdirectory ("src")
