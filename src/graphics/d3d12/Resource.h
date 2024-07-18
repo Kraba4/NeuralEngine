@@ -214,9 +214,9 @@ private:
 	uint32_t CalcConstantBufferByteSize(uint32_t a_byteSize) {
 		return (a_byteSize + 255) & ~255;
 	}
-	uint32_t m_elementSize;
-	uint32_t m_size;
 	UploadResource m_uploadResource;
 	DescriptorHeap::Handle m_viewHandle;
+	uint32_t m_elementSize;
+	uint32_t m_size;
 };
 }

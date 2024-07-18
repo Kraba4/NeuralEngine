@@ -14,25 +14,40 @@ namespace neural::graphics {
 
 class RootSignature {
 public:
-	enum class RootParameterType {
-		DescriptorTable, Constants, Descriptor
+	struct DescriptorRange {
+		D3D12_DESCRIPTOR_RANGE_TYPE rangeType;
+		UINT baseShaderRegister;
+		UINT numDescriptors;
+		UINT registerSpace = 0;
+		UINT offsetInDescriptorsFromTableStart =
+			D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	};
 
-	struct DescriptorTable {
-		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType;
-		uint32_t numDescriptors;
-		uint32_t baseShaderRegister;
-		D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+	struct RootConstants
+	{
+		UINT baseShaderRegister;
+		UINT num32BitValues;
+		UINT registerSpace = 0;
 	};
+
+	struct RootDescriptor
+	{
+		UINT baseShaderRegister;
+		UINT registerSpace = 0;
+	};
+
 
 	struct RootParameter {
-		RootParameterType parameterType;
-		union {
-			DescriptorTable descriptorTable;
-		};
+		D3D12_ROOT_PARAMETER_TYPE parameterType;
+
+		std::vector<DescriptorRange> descriptorTableRanges; // fill one depending on parameterType
+		RootConstants constants;                            // fill one depending on parameterType
+		RootDescriptor descriptor;                          // fill one depending on parameterType
+
+		D3D12_SHADER_VISIBILITY shaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	};
 
-	void initialize(ID3D12Device* a_device, std::vector<RootParameter> slots);
+	void initialize(ID3D12Device* a_device, const std::vector<RootParameter>& slots);
 	ID3D12RootSignature* getID3D12RootSignature();
 private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;

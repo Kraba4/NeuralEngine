@@ -2,20 +2,52 @@
 
 namespace neural::graphics {
 
-void RootSignature::initialize(ID3D12Device* a_device, std::vector<RootParameter> slots)
+void RootSignature::initialize(ID3D12Device* a_device, const std::vector<RootParameter>& a_slots)
 {
 	assert(a_device);
-	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters(slots.size());
-	for (int i = 0; i < slots.size(); ++i) {
-		if (slots[i].parameterType == RootParameterType::DescriptorTable) {
-			CD3DX12_DESCRIPTOR_RANGE cbvTable;
-			const DescriptorTable& table = slots[i].descriptorTable;
-			cbvTable.Init(table.descriptorType, table.numDescriptors, table.baseShaderRegister);
-			slotRootParameters[i].InitAsDescriptorTable(1, &cbvTable, table.visibility);
+	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters(a_slots.size());
+	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> ranges;
+	for (int i = 0; i < a_slots.size(); ++i) {
+		const auto& slot = a_slots[i];
+		auto& rootParameter = slotRootParameters[i];
+		switch (slot.parameterType)
+		{
+		case D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE:
+		{
+			ranges.emplace_back();
+			ranges.back().reserve(slot.descriptorTableRanges.size());
+			for (int j = 0; j < slot.descriptorTableRanges.size(); ++j) {
+				const auto& rangeParams = slot.descriptorTableRanges[j];
+				ranges.back().push_back({ .RangeType = rangeParams.rangeType,
+								   .NumDescriptors = rangeParams.numDescriptors,
+								   .BaseShaderRegister = rangeParams.baseShaderRegister,
+								   .RegisterSpace = rangeParams.registerSpace,
+								   .OffsetInDescriptorsFromTableStart = rangeParams.offsetInDescriptorsFromTableStart });
+			}
+			rootParameter.InitAsDescriptorTable(ranges.back().size(), ranges.back().data(), slot.shaderVisibility);
 		}
-		else {
+			break;
+		case D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS:
+			rootParameter.InitAsConstants(slot.constants.num32BitValues, slot.constants.baseShaderRegister,
+				                          slot.constants.registerSpace, slot.shaderVisibility);
+			break;
+		case D3D12_ROOT_PARAMETER_TYPE_CBV:
+			rootParameter.InitAsConstantBufferView(slot.descriptor.baseShaderRegister, slot.descriptor.registerSpace,
+				                                   slot.shaderVisibility);
+			break;
+		case D3D12_ROOT_PARAMETER_TYPE_SRV:
+			rootParameter.InitAsShaderResourceView(slot.descriptor.baseShaderRegister, slot.descriptor.registerSpace,
+				                                   slot.shaderVisibility);
+			break;
+		case D3D12_ROOT_PARAMETER_TYPE_UAV:
+			rootParameter.InitAsUnorderedAccessView(slot.descriptor.baseShaderRegister, slot.descriptor.registerSpace,
+												    slot.shaderVisibility);
+			break;
+		default:
 			assert(false);
+			break;
 		}
+
 	}
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(slotRootParameters.size(), slotRootParameters.data(), 0,

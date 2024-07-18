@@ -61,10 +61,10 @@ void DX12RenderEngine::initializeResources()
 void DX12RenderEngine::initializePipelines()
 {
 	m_rootSignature.initialize(m_mainDevice.Get(),
-		{ {.parameterType = RootSignature::RootParameterType::DescriptorTable,
-			.descriptorTable = {.descriptorType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-								 .numDescriptors = 1,
-								 .baseShaderRegister = 0}
+		{
+			{
+				.parameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+				.descriptor = {.baseShaderRegister = 0}
 			},
 		});
 	NAME_DX_OBJECT(m_rootSignature.getID3D12RootSignature(), L"RootSignature");
@@ -104,9 +104,12 @@ void DX12RenderEngine::render(const Timer& a_timer)
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.getID3D12RootSignature());
 	m_commandList->SetPipelineState(m_finalRenderPipeline.getID3D12Pipeline());
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.getID3D12DescriptorHeap()};
-	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
+	//ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.getID3D12DescriptorHeap()};
+	//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	//m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
+	
+	m_commandList->SetGraphicsRootConstantBufferView(0,
+		m_constantBuffer[currentFrameBufferIndex].getID3D12Resource()->GetGPUVirtualAddress());
 
 	auto vertexBufferView = m_vertexInputBuffer.getVertexBufferView(sizeof(Vertex));
 	m_commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
