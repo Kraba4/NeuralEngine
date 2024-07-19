@@ -38,7 +38,7 @@ public:
 	}
 private:
 	void deallocate(uint32_t a_index);
-	uint32_t getIndex(const Handle& a_handle);
+	uint32_t getIndex(const Handle& a_handle) const;
 	void clearHandle(Handle& a_handle);
 
 	ComPtr<ID3D12DescriptorHeap> m_heap;

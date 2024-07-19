@@ -1,14 +1,32 @@
 cbuffer cbPerObject : register(b0)
 {
-    float4x4 gWorldViewProj;
+    float4x4 WorldMatrix;
+    float4x4 ViewProjMatrix;
+    float3 LightPosition;
 };
-void VS(float2 iPos : POSITION,
-        out float4 oPos : SV_POSITION)
+struct Surface
 {
-    oPos = mul(float4(iPos, 0, 1), gWorldViewProj);
+    float3 posW : POSITION;
+    float3 normalW : NORMAL;
+};
+void VS(float3 iPos : POSITION,
+        float3 iNormal : NORMAL,
+        out float4 oPos : SV_POSITION,
+        out Surface oSurface)
+{
+    float3 posW = mul(float4(iPos, 1), WorldMatrix).xyz;
+    float3 normalW = mul(float4(iNormal, 0), WorldMatrix).xyz;
+    
+    oSurface.posW = posW;
+    oSurface.normalW = normalW;
+    
+    oPos = mul(float4(posW, 1), ViewProjMatrix);
+    oPos.y = -oPos.y;
 }
 
-float4 PS(float4 oPos : SV_POSITION) : SV_Target
+float4 PS(float4 oPos : SV_POSITION, Surface oSurface) : SV_Target
 {
-    return float4(gWorldViewProj[0][0], 0.8, 0.3, 1);
+    float3 color = 1;
+    float3 lightDir = normalize(LightPosition - oSurface.posW);
+    return float4(color * dot(lightDir, normalize(oSurface.normalW)), 1);
 }

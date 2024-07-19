@@ -27,7 +27,7 @@ bool Timer::tryRecalculateFPS() {
 	return false;
 }
 
-int Timer::getLastFPS() {
+int Timer::getLastFPS() const {
 	return m_fps;
 }
 double Timer::getLastTime() const

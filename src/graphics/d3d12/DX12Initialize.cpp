@@ -44,6 +44,8 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
 	for (int i = 0; i < k_nSwapChainBuffers; ++i) {
 		m_frameBufferFenceValue[i] = 1;
 	}
+
+	m_camera.setFrustum(DirectX::XMConvertToRadians(90), m_windowWidth / m_windowHeight, 1, 1000);
 }
 
 void DX12RenderEngine::createDXGIFactory()

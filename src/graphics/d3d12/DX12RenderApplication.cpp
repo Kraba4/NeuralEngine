@@ -73,7 +73,8 @@ void DX12RenderEngine::initializePipelines()
 		GraphicsPipeline::CreateInfo{
 			.rootSignature = m_rootSignature,
 			.inputLayout = {
-				{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+				{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 			},
 			.vertexShaderPath = D3D12_ROOT"/shaders/compiled/1.vs.cso",
 			.pixelShaderPath  = D3D12_ROOT"/shaders/compiled/1.ps.cso",
@@ -87,12 +88,15 @@ void DX12RenderEngine::render(const Timer& a_timer)
 {
 	beginFrame();
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
-	float scale = std::fmod(static_cast<float>(a_timer.getLastTime()), 2.0f);
-	auto toUpload = DirectX::XMFLOAT4X4(scale, 0, 0, 0,
-										0, scale, 0, 0,
-										0, 0, 1, 0,
-										0, 0, 0, 1);
-	m_constantBuffer[currentFrameBufferIndex].uploadData(&toUpload);
+	m_camera.updateViewMatrix();
+	cbCameraParams.LightPosition = { 0, 0, 0 };
+	DirectX::XMMATRIX rotation = DirectX::XMMatrixMultiply(DirectX::XMMatrixRotationX(static_cast<float>(a_timer.getLastTime())),
+		DirectX::XMMatrixRotationY(static_cast<float>(a_timer.getLastTime())));
+	DirectX::XMMATRIX cubeWorld = DirectX::XMMatrixMultiplyTranspose(
+		rotation, DirectX::XMMatrixTranslation(0, 0, -2));
+	DirectX::XMStoreFloat4x4(&cbCameraParams.WorldMatrix, cubeWorld);
+	DirectX::XMStoreFloat4x4(&cbCameraParams.ViewProjMatrix, DirectX::XMMatrixMultiply(m_camera.getView(), m_camera.getProj()));
+	m_constantBuffer[currentFrameBufferIndex].uploadData(&cbCameraParams);
 
 	auto currentBufferView = m_screenTextures[currentFrameBufferIndex].getRenderTargetView("default", 0);
 	auto& currentDepthBufferView = m_depthTextures[currentFrameBufferIndex].getDepthStencilView("default");

@@ -4,6 +4,7 @@
 #include "RootSignature.h"
 #include "DescriptorHeap.h"
 #include "Resource.h"
+#include <a_main/Camera.h>
 
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>
@@ -16,7 +17,8 @@ namespace neural::graphics {
 class DX12RenderEngine : public IRenderEngine {
 public:
 	struct Vertex {
-		DirectX::XMFLOAT2 position;
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
 	};
 	void initialize(HWND a_window, int a_width, int a_height) override;
 	void render(const Timer& a_timer) override;
@@ -54,12 +56,34 @@ private:
 	DescriptorHeap m_dsvHeap;
 	DescriptorHeap m_cbvHeap;
 
-	std::vector<Vertex> mesh = { {{-0.5f, 0.f}}, {{0.f, 0.f}}, {{0.f, -0.5f}},
-							 {{0.f, 0.f}}, {{0.f, 1.f}}, {{0.5f, 0.f}} };
+	std::vector<Vertex> mesh = {
+	{{-0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}}, {{0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}}, {{0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}},
+	{{-0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}}, {{0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}}, {{-0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}},
+
+	{{0.5f, 0.5f, 0.5f}, {1.0f, 0, 0.0f}}, {{0.5f, 0.5f, -0.5f}, {1.0f, 0, 0.0f}}, {{0.5f, -0.5f, 0.5f}, {1.0f, 0, 0.0f}},
+	{{0.5f, -0.5f, 0.5f}, {1.0f, 0, 0.0f}}, {{0.5f, 0.5f, -0.5f}, {1.0f, 0, 0.0f}}, {{0.5f, -0.5f, -0.5f}, {1.0f, 0, 0.0f}}, 
+	
+	{{-0.5f, 0.5f, -0.5f}, {-1.0f, 0, 0.0f}}, {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0, 0.0f}}, {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0, 0.0f}},
+	{{-0.5f, 0.5f, -0.5f}, {-1.0f, 0, 0.0f}}, {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0, 0.0f}}, {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0, 0.0f}},
+	
+	{{0.5f, 0.5f, -0.5f}, {0, 0, -1.0f}},  {{-0.5f, -0.5f, -0.5f}, {0, 0, -1.0f}}, {{0.5f, -0.5f, -0.5f}, {0, 0, -1.0f}},
+	{{0.5f, 0.5f, -0.5f}, {0, 0, -1.0f}}, {{-0.5f, 0.5f, -0.5f}, {0, 0, -1.0f}}, {{-0.5f, -0.5f, -0.5f}, {0, 0, -1.0f}},
+
+	{{-0.5f, 0.5f, -0.5f}, {0, 1.0f, 0}},  {{0.5f, 0.5f, -0.5f}, {0, 1.0f, 0}}, {{0.5f, 0.5f, 0.5f}, {0, 1.0f, 0}},
+	{{-0.5f, 0.5f, -0.5f}, {0, 1.0f, 0}},  {{0.5f, 0.5f, 0.5f}, {0, 1.0f, 0}}, {{-0.5f, 0.5f, 0.5f}, {0, 1.0f, 0}},
+
+	{{-0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}},  {{0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}}, {{0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}},
+	{{-0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}},  {{-0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}}, {{0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}},
+	};
 
 	DefaultResource m_screenTextures[k_nSwapChainBuffers];
 	DefaultResource m_depthTextures[k_nSwapChainBuffers];
-	ConstantBuffer<DirectX::XMFLOAT4X4> m_constantBuffer[k_nSwapChainBuffers];
+	struct CBCameraParams {
+		DirectX::XMFLOAT4X4 WorldMatrix;
+		DirectX::XMFLOAT4X4 ViewProjMatrix;
+		DirectX::XMFLOAT3 LightPosition;
+	} cbCameraParams;
+	ConstantBuffer<CBCameraParams> m_constantBuffer[k_nSwapChainBuffers];
 	DefaultResource m_vertexInputBuffer;
 
 	GraphicsPipeline m_finalRenderPipeline;
@@ -72,5 +96,7 @@ private:
 
 	D3D12_VIEWPORT m_screenViewport;
 	D3D12_RECT m_screenScissor;
+
+	Camera m_camera;
 };
 }

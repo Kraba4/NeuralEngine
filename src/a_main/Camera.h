@@ -63,7 +63,7 @@ private:
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
-	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, -1.0f };
 
 	// Cache frustum properties.
 	float m_nearZ = 0.0f;

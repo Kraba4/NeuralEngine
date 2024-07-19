@@ -6,7 +6,7 @@ public:
 	void   setTime(double a_currentTime);
 	double calculateDT(double a_currentTime);
 	bool   tryRecalculateFPS();
-	int    getLastFPS();
+	int    getLastFPS() const;
 	double getLastTime() const;
 private:
 	static constexpr int NAverage = 60;

@@ -86,7 +86,7 @@ void DescriptorHeap::deallocate(uint32_t a_index)
 	m_freeIndices[m_heapSize] = a_index;
 }
 
-uint32_t DescriptorHeap::getIndex(const Handle& a_handle)
+uint32_t DescriptorHeap::getIndex(const Handle& a_handle) const
 {
 	assert(m_heapSize > 0);
 	assert(a_handle.cpu.ptr != 0);

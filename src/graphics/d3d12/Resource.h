@@ -61,7 +61,7 @@ public:
 		assert(m_handles.contains(a_viewName));
 		return m_handles[a_viewName];
 	}
-	D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(uint32_t a_elementSize) {
+	D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(uint32_t a_elementSize) const {
 		D3D12_VERTEX_BUFFER_VIEW vertexInputBufferView;
 		vertexInputBufferView.BufferLocation = m_resource.Get()->GetGPUVirtualAddress();
 		vertexInputBufferView.SizeInBytes = m_resource.Get()->GetDesc().Width;
