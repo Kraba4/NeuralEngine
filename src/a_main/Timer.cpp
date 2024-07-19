@@ -9,11 +9,11 @@ void Timer::setTime(double a_currentTime) {
 }
 
 double Timer::calculateDT(double a_currentTime) {
-	double dt = a_currentTime - m_lastTime;
+	m_dt = a_currentTime - m_lastTime;
 	m_lastTime = a_currentTime;
-	m_avgTime += dt;
+	m_avgTime += m_dt;
 	m_avgCounter++;
-	return dt;
+	return m_dt;
 }
 
 bool Timer::tryRecalculateFPS() {
@@ -33,5 +33,9 @@ int Timer::getLastFPS() const {
 double Timer::getLastTime() const
 {
 	return m_lastTime;
+}
+double Timer::getLastDeltaTime() const
+{
+	return m_dt;
 }
 }

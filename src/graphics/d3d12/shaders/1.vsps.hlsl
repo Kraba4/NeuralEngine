@@ -8,9 +8,11 @@ struct Surface
 {
     float3 posW : POSITION;
     float3 normalW : NORMAL;
+    float3 colorW : COLOR;
 };
 void VS(float3 iPos : POSITION,
         float3 iNormal : NORMAL,
+        float3 iColor : COLOR,
         out float4 oPos : SV_POSITION,
         out Surface oSurface)
 {
@@ -19,6 +21,7 @@ void VS(float3 iPos : POSITION,
     
     oSurface.posW = posW;
     oSurface.normalW = normalW;
+    oSurface.colorW = iColor;
     
     oPos = mul(float4(posW, 1), ViewProjMatrix);
     oPos.y = -oPos.y;
@@ -26,7 +29,7 @@ void VS(float3 iPos : POSITION,
 
 float4 PS(float4 oPos : SV_POSITION, Surface oSurface) : SV_Target
 {
-    float3 color = 1;
+    float3 color = oSurface.colorW;
     float3 lightDir = normalize(LightPosition - oSurface.posW);
     return float4(color * dot(lightDir, normalize(oSurface.normalW)), 1);
 }

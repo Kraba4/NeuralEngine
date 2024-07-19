@@ -74,7 +74,8 @@ void DX12RenderEngine::initializePipelines()
 			.rootSignature = m_rootSignature,
 			.inputLayout = {
 				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-				{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+				{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+				{ "COLOR",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 			},
 			.vertexShaderPath = D3D12_ROOT"/shaders/compiled/1.vs.cso",
 			.pixelShaderPath  = D3D12_ROOT"/shaders/compiled/1.ps.cso",
@@ -90,8 +91,13 @@ void DX12RenderEngine::render(const Timer& a_timer)
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
 	m_camera.updateViewMatrix();
 	cbCameraParams.LightPosition = { 0, 0, 0 };
-	DirectX::XMMATRIX rotation = DirectX::XMMatrixMultiply(DirectX::XMMatrixRotationX(static_cast<float>(a_timer.getLastTime())),
-		DirectX::XMMatrixRotationY(static_cast<float>(a_timer.getLastTime())));
+	if (enableRotating) {
+		rotatingTime += a_timer.getLastDeltaTime() * rotateSpeed;
+		angleX = std::fmod(static_cast<float>(rotatingTime), DirectX::XM_2PI);
+		angleY = std::fmod(static_cast<float>(rotatingTime / 2), DirectX::XM_2PI);
+	}
+	DirectX::XMMATRIX rotation = DirectX::XMMatrixMultiply(DirectX::XMMatrixRotationX(angleX),
+		DirectX::XMMatrixRotationY(angleY));
 	DirectX::XMMATRIX cubeWorld = DirectX::XMMatrixMultiplyTranspose(
 		rotation, DirectX::XMMatrixTranslation(0, 0, -2));
 	DirectX::XMStoreFloat4x4(&cbCameraParams.WorldMatrix, cubeWorld);
@@ -122,5 +128,20 @@ void DX12RenderEngine::render(const Timer& a_timer)
 	m_commandList->OMSetRenderTargets(1, &currentBufferView.cpu, true, &currentDepthBufferView.cpu);
 	m_commandList->DrawInstanced(mesh.size(), 1, 0, 0);
 	endFrame();
+}
+
+void DX12RenderEngine::processInputs(const AppInput& a_appInput)
+{
+	if (a_appInput.keyPressed[GLFW_KEY_R]) {
+		enableRotating = !enableRotating;
+	}
+
+	if (a_appInput.keyPressed[GLFW_KEY_UP] || a_appInput.keyRepeated[GLFW_KEY_UP]) {
+		rotateSpeed += 0.1;
+	}
+
+	if (a_appInput.keyPressed[GLFW_KEY_DOWN] || a_appInput.keyRepeated[GLFW_KEY_DOWN]) {
+		rotateSpeed = max(0, rotateSpeed - 0.1);
+	}
 }
 }

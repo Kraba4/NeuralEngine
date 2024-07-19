@@ -3,6 +3,7 @@
 #include <game/Game.h>
 #include <graphics/IRenderEngine.h>
 #include "Timer.h"
+#include "AppInput.h"
 
 #include <GLFW/glfw3.h>
 
@@ -17,11 +18,13 @@ public:
 	~Application();
 private:
 	void settingGLFW();
-	void showFPS(Timer& a_timer);
+	void showFPS(Timer& a_timer, bool a_enableStatistics);
 
 	GLFWwindow* m_window{ nullptr };
 	std::shared_ptr<game::GameEngine> m_game;
 	std::shared_ptr<graphics::IRenderEngine> m_renderer;
 
+	inline static AppInput g_appInput;
+	static void onKeyboardPressedBasic(GLFWwindow* window, int key, int, int action, int);
 };
 }
