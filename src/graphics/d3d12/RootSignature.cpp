@@ -18,6 +18,8 @@ void RootSignature::initialize(ID3D12Device* a_device, const std::vector<RootPar
 			ranges.back().reserve(slot.descriptorTableRanges.size());
 			for (int j = 0; j < slot.descriptorTableRanges.size(); ++j) {
 				const auto& rangeParams = slot.descriptorTableRanges[j];
+				assert(rangeParams.numDescriptors != UINT_MAX);
+				assert(rangeParams.baseShaderRegister != UINT_MAX);
 				ranges.back().push_back({ .RangeType = rangeParams.rangeType,
 								   .NumDescriptors = rangeParams.numDescriptors,
 								   .BaseShaderRegister = rangeParams.baseShaderRegister,
@@ -28,18 +30,23 @@ void RootSignature::initialize(ID3D12Device* a_device, const std::vector<RootPar
 		}
 			break;
 		case D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS:
+			assert(slot.constants.baseShaderRegister != UINT_MAX);
+			assert(slot.constants.num32BitValues != UINT_MAX);
 			rootParameter.InitAsConstants(slot.constants.num32BitValues, slot.constants.baseShaderRegister,
 				                          slot.constants.registerSpace, slot.shaderVisibility);
 			break;
 		case D3D12_ROOT_PARAMETER_TYPE_CBV:
+			assert(slot.descriptor.baseShaderRegister != UINT_MAX);
 			rootParameter.InitAsConstantBufferView(slot.descriptor.baseShaderRegister, slot.descriptor.registerSpace,
 				                                   slot.shaderVisibility);
 			break;
 		case D3D12_ROOT_PARAMETER_TYPE_SRV:
+			assert(slot.descriptor.baseShaderRegister != UINT_MAX);
 			rootParameter.InitAsShaderResourceView(slot.descriptor.baseShaderRegister, slot.descriptor.registerSpace,
 				                                   slot.shaderVisibility);
 			break;
 		case D3D12_ROOT_PARAMETER_TYPE_UAV:
+			assert(slot.descriptor.baseShaderRegister != UINT_MAX);
 			rootParameter.InitAsUnorderedAccessView(slot.descriptor.baseShaderRegister, slot.descriptor.registerSpace,
 												    slot.shaderVisibility);
 			break;

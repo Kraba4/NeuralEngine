@@ -25,7 +25,6 @@ public:
 	void initialize(HWND a_window, int a_width, int a_height) override;
 	void render(const Timer& a_timer) override;
 	void shutdown() override;
-	void processInputs(const AppInput& a_appInput) override;
 private:
 	void createDXGIFactory();
 	void createDevice();
@@ -60,14 +59,16 @@ private:
 	DescriptorHeap m_cbvHeap;
 
 	
-	DirectX::XMFLOAT3 color1 = { 0.f, 0.960784376f, 0.f };
-	DirectX::XMFLOAT3 color2 = { 1, 1, 1 };
-	DirectX::XMFLOAT3 color3 = { 1.f, 0.498039246f, 0.313725501f };
-	DirectX::XMFLOAT3 color4 = { 1.f, 0.843137324f, 0.f };
-	DirectX::XMFLOAT3 color5 = { 0.254901975f, 0.411764741f, 0.882353008f };
-	DirectX::XMFLOAT3 color6 = { 0.f, 0.972549081f, 0.9f };
+	DirectX::XMFLOAT3 color1 = { 255.0f / 255, 190.0f / 255, 11.0f / 255 };
+	DirectX::XMFLOAT3 color2 = { 251.0f / 255, 86.0f / 255, 7.0f / 255 };
+	DirectX::XMFLOAT3 color3 = { 255.0f / 255, 0.0f / 255, 110.0f / 255 };
+	DirectX::XMFLOAT3 color4 = { 131.0f / 255, 56.0f / 255, 236.0f / 255 };
+	DirectX::XMFLOAT3 color5 = { 1, 1, 1};
+	DirectX::XMFLOAT3 color6 = { 0.0f, 0.9f, 0.0f };
 
+	DirectX::XMFLOAT3 colorPlane = { 1, 1, 1 };
 	std::vector<Vertex> mesh = {
+		//cube
 	{{-0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}, color1},
 	{{-0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{-0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}, color1},
 
@@ -85,6 +86,11 @@ private:
 
 	{{-0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}, color6},  {{0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}, color6}, {{0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}, color6},
 	{{-0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}, color6},  {{-0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}, color6}, {{0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}, color6},
+	
+		//plane
+	{{-500.0f, 0.0f, -500.f}, {0, 1.0f, 0}, colorPlane},  {{500.f, 0.0f, -500.f}, {0, 1.0f, 0}, colorPlane}, {{500.f, 0.f, 500.f}, {0, 1.0f, 0}, colorPlane},
+	{{-500.f, 0.0f, -500.f}, {0, 1.0f, 0}, colorPlane},  {{500.f, 0.0f, 500.f}, {0, 1.0f, 0}, colorPlane}, {{-500.f, 0.f, 500.f}, {0, 1.0f, 0}, colorPlane},
+
 	};
 
 	DefaultResource m_screenTextures[k_nSwapChainBuffers];
@@ -107,12 +113,5 @@ private:
 
 	D3D12_VIEWPORT m_screenViewport;
 	D3D12_RECT m_screenScissor;
-
-	Camera m_camera;
-	float angleX;
-	float angleY;
-	bool enableRotating = true;
-	double rotatingTime = 0;
-	double rotateSpeed = 1;
 };
 }

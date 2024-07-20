@@ -1,12 +1,10 @@
 #include "Application.h"
-//#include "WindowCallbacks.h"
 #include <graphics/d3d12/DX12RenderEngine.h>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
 #include <sstream>
-//GLFWwindow* m_window{ nullptr };
 
 namespace neural {
 
@@ -50,9 +48,6 @@ void Application::settingGLFW() {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-	// callbacks
-	// ...
 	glfwSwapInterval(0);
 }
 
@@ -61,11 +56,15 @@ void Application::initialize(std::string_view a_name, int a_width, int a_height)
 	settingGLFW();
 	m_window = glfwCreateWindow(a_width, a_height, a_name.data(), nullptr, nullptr);
 	glfwSetKeyCallback(m_window, onKeyboardPressedBasic);
-	m_game = std::make_shared<game::GameEngine>();
-	m_game->initialize();
+	glfwSetMouseButtonCallback(m_window, onMouseButtonClickedBasic);
+	//glfwSetCursorPosCallback(m_window, onMouseMoveBasic);
 
 	m_renderer = std::make_shared<graphics::DX12RenderEngine>();
 	m_renderer->initialize(glfwGetWin32Window(m_window), a_width, a_height);
+
+	m_game = std::make_shared<game::GameEngine>();
+	m_game->initialize();
+	m_game->setRenderSettingsPtr(m_renderer->getRenderSettingsPtr());
 }
 
 void Application::mainLoop()
@@ -75,7 +74,8 @@ void Application::mainLoop()
 	while (!glfwWindowShouldClose(m_window))
 	{
 		g_appInput.clearKeys();
-		glfwPollEvents();
+		glfwPollEvents();            // g_appInput receives inputs from callbacks
+		receiveTickInputs(m_window); // g_appInput receives current tick inputs
 
 		static bool enableStatisticsFPS = true;
 		if (g_appInput.keyPressed[GLFW_KEY_GRAVE_ACCENT]) enableStatisticsFPS = !enableStatisticsFPS;
@@ -83,9 +83,8 @@ void Application::mainLoop()
 
 		double dt = timer.calculateDT(glfwGetTime());
 
-		m_game->processInputs();
+		m_game->processInputs(g_appInput, dt);
 
-		m_renderer->processInputs(g_appInput);
 		m_renderer->render(timer);
 	}
 }

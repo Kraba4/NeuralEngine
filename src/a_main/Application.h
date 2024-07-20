@@ -26,5 +26,8 @@ private:
 
 	inline static AppInput g_appInput;
 	static void onKeyboardPressedBasic(GLFWwindow* window, int key, int, int action, int);
+	static void onMouseButtonClickedBasic(GLFWwindow* window, int button, int action, int);
+	//static void onMouseMoveBasic(GLFWwindow*, double xpos, double ypos);
+	static void receiveTickInputs(GLFWwindow* a_window);
 };
 }

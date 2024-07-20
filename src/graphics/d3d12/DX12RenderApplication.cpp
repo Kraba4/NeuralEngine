@@ -63,8 +63,12 @@ void DX12RenderEngine::initializePipelines()
 	m_rootSignature.initialize(m_mainDevice.Get(),
 		{
 			{
+				.parameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+				.constants = {.baseShaderRegister = 0, .num32BitValues = 1}
+			},
+			{
 				.parameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-				.descriptor = {.baseShaderRegister = 0}
+				.descriptor = {.baseShaderRegister = 1}
 			},
 		});
 	NAME_DX_OBJECT(m_rootSignature.getID3D12RootSignature(), L"RootSignature");
@@ -89,19 +93,21 @@ void DX12RenderEngine::render(const Timer& a_timer)
 {
 	beginFrame();
 	const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
-	m_camera.updateViewMatrix();
-	cbCameraParams.LightPosition = { 0, 0, 0 };
-	if (enableRotating) {
-		rotatingTime += a_timer.getLastDeltaTime() * rotateSpeed;
-		angleX = std::fmod(static_cast<float>(rotatingTime), DirectX::XM_2PI);
-		angleY = std::fmod(static_cast<float>(rotatingTime / 2), DirectX::XM_2PI);
+	m_settings.camera.updateViewMatrix();
+	cbCameraParams.LightPosition = { 0, 20, 0 };
+	if (m_settings.enableRotating) {
+		m_settings.rotatingTimeX += a_timer.getLastDeltaTime() * m_settings.rotateSpeedX;
+		m_settings.rotatingTimeY += a_timer.getLastDeltaTime() * m_settings.rotateSpeedY;
 	}
+	float angleX = std::fmod(static_cast<float>(m_settings.rotatingTimeX), DirectX::XM_2PI);
+	float angleY = std::fmod(static_cast<float>(m_settings.rotatingTimeY), DirectX::XM_2PI);
 	DirectX::XMMATRIX rotation = DirectX::XMMatrixMultiply(DirectX::XMMatrixRotationX(angleX),
 		DirectX::XMMatrixRotationY(angleY));
 	DirectX::XMMATRIX cubeWorld = DirectX::XMMatrixMultiplyTranspose(
-		rotation, DirectX::XMMatrixTranslation(0, 0, -2));
+		rotation, DirectX::XMMatrixTranslation(0, 3, 10));
+	cubeWorld = DirectX::XMMatrixMultiply(cubeWorld, DirectX::XMMatrixScaling(3, 3, 3));
 	DirectX::XMStoreFloat4x4(&cbCameraParams.WorldMatrix, cubeWorld);
-	DirectX::XMStoreFloat4x4(&cbCameraParams.ViewProjMatrix, DirectX::XMMatrixMultiply(m_camera.getView(), m_camera.getProj()));
+	DirectX::XMStoreFloat4x4(&cbCameraParams.ViewProjMatrix, DirectX::XMMatrixMultiplyTranspose(m_settings.camera.getView(), m_settings.camera.getProj()));
 	m_constantBuffer[currentFrameBufferIndex].uploadData(&cbCameraParams);
 
 	auto currentBufferView = m_screenTextures[currentFrameBufferIndex].getRenderTargetView("default", 0);
@@ -118,7 +124,8 @@ void DX12RenderEngine::render(const Timer& a_timer)
 	//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	//m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
 	
-	m_commandList->SetGraphicsRootConstantBufferView(0,
+	m_commandList->SetGraphicsRoot32BitConstant(0, 0, 0);
+	m_commandList->SetGraphicsRootConstantBufferView(1,
 		m_constantBuffer[currentFrameBufferIndex].getID3D12Resource()->GetGPUVirtualAddress());
 
 	auto vertexBufferView = m_vertexInputBuffer.getVertexBufferView(sizeof(Vertex));
@@ -126,22 +133,12 @@ void DX12RenderEngine::render(const Timer& a_timer)
 	m_commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_commandList->OMSetRenderTargets(1, &currentBufferView.cpu, true, &currentDepthBufferView.cpu);
-	m_commandList->DrawInstanced(mesh.size(), 1, 0, 0);
+	m_commandList->DrawInstanced(mesh.size() - 6, 1, 0, 0);
+
+	DirectX::XMStoreFloat4x4(&cbCameraParams.WorldMatrix, DirectX::XMMatrixIdentity());
+
+	m_commandList->SetGraphicsRoot32BitConstant(0, 1, 0);
+	m_commandList->DrawInstanced(6, 1, mesh.size() - 6, 0);
 	endFrame();
-}
-
-void DX12RenderEngine::processInputs(const AppInput& a_appInput)
-{
-	if (a_appInput.keyPressed[GLFW_KEY_R]) {
-		enableRotating = !enableRotating;
-	}
-
-	if (a_appInput.keyPressed[GLFW_KEY_UP] || a_appInput.keyRepeated[GLFW_KEY_UP]) {
-		rotateSpeed += 0.1;
-	}
-
-	if (a_appInput.keyPressed[GLFW_KEY_DOWN] || a_appInput.keyRepeated[GLFW_KEY_DOWN]) {
-		rotateSpeed = max(0, rotateSpeed - 0.1);
-	}
 }
 }

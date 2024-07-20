@@ -16,8 +16,8 @@ class RootSignature {
 public:
 	struct DescriptorRange {
 		D3D12_DESCRIPTOR_RANGE_TYPE rangeType;
-		UINT baseShaderRegister;
-		UINT numDescriptors;
+		UINT baseShaderRegister = UINT_MAX;
+		UINT numDescriptors = UINT_MAX;
 		UINT registerSpace = 0;
 		UINT offsetInDescriptorsFromTableStart =
 			D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -25,14 +25,14 @@ public:
 
 	struct RootConstants
 	{
-		UINT baseShaderRegister;
-		UINT num32BitValues;
+		UINT baseShaderRegister = UINT_MAX;
+		UINT num32BitValues = UINT_MAX;
 		UINT registerSpace = 0;
 	};
 
 	struct RootDescriptor
 	{
-		UINT baseShaderRegister;
+		UINT baseShaderRegister = UINT_MAX;
 		UINT registerSpace = 0;
 	};
 

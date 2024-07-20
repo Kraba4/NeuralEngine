@@ -19,8 +19,8 @@ public:
 	DirectX::XMFLOAT3 getRight3f() const;
 	DirectX::XMVECTOR getUp() const;
 	DirectX::XMFLOAT3 getUp3f() const;
-	DirectX::XMVECTOR getLook() const;
-	DirectX::XMFLOAT3 getLook3f() const;
+	DirectX::XMVECTOR getForward() const;
+	DirectX::XMFLOAT3 getForward3f() const;
 
 	// Get frustum properties.
 	float getNearZ() const;
@@ -60,10 +60,10 @@ public:
 	void updateViewMatrix();
 private:
 	// Camera coordinate system with coordinates relative to world space.
-	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_position = { 0.0f, 3.0f, 0.0f };
 	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
-	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, -1.0f };
+	DirectX::XMFLOAT3 m_forward = { 0.0f, 0.0f, 1.0f };
 
 	// Cache frustum properties.
 	float m_nearZ = 0.0f;

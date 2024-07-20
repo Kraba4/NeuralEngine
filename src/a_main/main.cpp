@@ -4,8 +4,8 @@
 #include <dxgi1_6.h>
 #include "Application.h"
 
-constexpr int32_t WIDTH = 800;
-constexpr int32_t HEIGHT = 400;
+constexpr int32_t WIDTH = 980;
+constexpr int32_t HEIGHT = 620;
 
 
 int main() {
