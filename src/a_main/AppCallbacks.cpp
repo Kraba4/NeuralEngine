@@ -13,13 +13,13 @@ void Application::onKeyboardPressedBasic(GLFWwindow* window, int key, int, int a
             glfwSetWindowShouldClose(window, static_cast<int>(true));
         }
         break;
-    //case GLFW_KEY_LEFT_SHIFT:
-    //    g_inputDesktop.camMoveSpeed = 10.0f;
-    //    break;
+        //case GLFW_KEY_LEFT_SHIFT:
+        //    g_inputDesktop.camMoveSpeed = 10.0f;
+        //    break;
 
-    //case GLFW_KEY_LEFT_CONTROL:
-    //    g_inputDesktop.camMoveSpeed = 1.0f;
-    //    break;
+        //case GLFW_KEY_LEFT_CONTROL:
+        //    g_inputDesktop.camMoveSpeed = 1.0f;
+        //    break;
 
     default:
         if (key >= 0 && key < AppInput::MAX_KEYS)
@@ -74,7 +74,7 @@ void Application::receiveTickInputs(GLFWwindow* a_window) {
     g_appInput.mouse.posY = newPosY;
 
     constexpr int keysToCheckHold[] = {
-        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_A, 
+        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_A,
         GLFW_KEY_LEFT_SHIFT,
         GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_DOWN
     };
@@ -82,6 +82,6 @@ void Application::receiveTickInputs(GLFWwindow* a_window) {
     for (auto key : keysToCheckHold) {
         g_appInput.keyHold[key] = glfwGetKey(a_window, key);
     }
-   
+
 }
 }
