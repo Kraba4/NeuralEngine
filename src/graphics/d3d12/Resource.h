@@ -68,6 +68,13 @@ public:
 		vertexInputBufferView.StrideInBytes = a_elementSize;
 		return vertexInputBufferView;
 	}
+	D3D12_INDEX_BUFFER_VIEW getIndexBufferView() const {
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+		indexBufferView.BufferLocation = m_resource.Get()->GetGPUVirtualAddress();
+		indexBufferView.SizeInBytes = m_resource.Get()->GetDesc().Width;
+		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		return indexBufferView;
+	}
 	ID3D12Resource* getID3D12Resource() {
 		return m_resource.Get();
 	}

@@ -19,7 +19,7 @@ void Application::showFPS(Timer& a_timer, bool a_enableStatistics) {
 		int fps = a_timer.getLastFPS();
 		if (a_enableStatistics) {
 			maxFPS = max(maxFPS, fps);
-			minFPS = min(minFPS, fps);
+			minFPS = std::min(minFPS, fps);
 			sumFPS += a_timer.getLastFPS();
 			++countCheckFPS;
 			if (countCheckFPS >= NEED_CHECK_FPS) {

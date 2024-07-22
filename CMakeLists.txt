@@ -18,5 +18,8 @@ set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(D3D12_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/src/graphics/d3d12")
+add_compile_definitions(RESOURCES="${CMAKE_CURRENT_SOURCE_DIR}/resources")
 # Включите подпроекты.
+# add_subdirectory (${CMAKE_SOURCE_DIR}/external/assimp)
 add_subdirectory ("src")
+add_subdirectory ("external/assimp")

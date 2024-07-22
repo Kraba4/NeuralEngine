@@ -9,8 +9,9 @@ void Application::onKeyboardPressedBasic(GLFWwindow* window, int key, int, int a
     switch (key)
     {
     case GLFW_KEY_ESCAPE:
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, static_cast<int>(true));
+        }
         break;
     //case GLFW_KEY_LEFT_SHIFT:
     //    g_inputDesktop.camMoveSpeed = 10.0f;
@@ -23,10 +24,12 @@ void Application::onKeyboardPressedBasic(GLFWwindow* window, int key, int, int a
     default:
         if (key >= 0 && key < AppInput::MAX_KEYS)
         {
-            if (action == GLFW_RELEASE)
+            if (action == GLFW_RELEASE) {
                 g_appInput.keyReleased[key] = true;
-            else if (action == GLFW_PRESS)
+            }
+            else if (action == GLFW_PRESS) {
                 g_appInput.keyPressed[key] = true;
+            }
         }
         break;
     }

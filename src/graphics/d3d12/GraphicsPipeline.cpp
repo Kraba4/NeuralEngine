@@ -13,7 +13,6 @@ void GraphicsPipeline::initialize(ID3D12Device* a_device, std::string_view a_deb
     pipelineDesc.VS = { vsByteCode.data(), vsByteCode.size() };
     std::vector<char> psByteCode = utils::loadBinary(a_info.pixelShaderPath);
     pipelineDesc.PS = { psByteCode.data(), psByteCode.size() };
-    a_info.rasterizerState.FrontCounterClockwise = true;
     pipelineDesc.RasterizerState = a_info.rasterizerState;
     pipelineDesc.BlendState = a_info.blendState;
     pipelineDesc.DepthStencilState = a_info.depthStencilState;

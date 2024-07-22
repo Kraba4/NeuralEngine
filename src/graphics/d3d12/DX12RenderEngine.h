@@ -9,6 +9,9 @@
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>
 #include <DirectXColors.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include <memory>
 
@@ -20,7 +23,7 @@ public:
 	struct Vertex {
 		DirectX::XMFLOAT3 position;
 		DirectX::XMFLOAT3 normal;
-		DirectX::XMFLOAT3 color;
+		DirectX::XMFLOAT2 textureCoordinates;
 	};
 	void initialize(HWND a_window, int a_width, int a_height) override;
 	void render(const Timer& a_timer) override;
@@ -58,40 +61,8 @@ private:
 	DescriptorHeap m_dsvHeap;
 	DescriptorHeap m_cbvHeap;
 
-	
-	DirectX::XMFLOAT3 color1 = { 255.0f / 255, 190.0f / 255, 11.0f / 255 };
-	DirectX::XMFLOAT3 color2 = { 251.0f / 255, 86.0f / 255, 7.0f / 255 };
-	DirectX::XMFLOAT3 color3 = { 255.0f / 255, 0.0f / 255, 110.0f / 255 };
-	DirectX::XMFLOAT3 color4 = { 131.0f / 255, 56.0f / 255, 236.0f / 255 };
-	DirectX::XMFLOAT3 color5 = { 1, 1, 1};
-	DirectX::XMFLOAT3 color6 = { 0.0f, 0.9f, 0.0f };
-
-	DirectX::XMFLOAT3 colorPlane = { 1, 1, 1 };
-	std::vector<Vertex> mesh = {
-		//cube
-	{{-0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}, color1},
-	{{-0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{0.5f, 0.5f, 0.5f}, {0, 0, 1.0f}, color1}, {{-0.5f, -0.5f, 0.5f}, {0, 0, 1.0f}, color1},
-
-	{{0.5f, 0.5f, 0.5f}, {1.0f, 0, 0.0f}, color2}, {{0.5f, 0.5f, -0.5f}, {1.0f, 0, 0.0f}, color2}, {{0.5f, -0.5f, 0.5f}, {1.0f, 0, 0.0f}, color2},
-	{{0.5f, -0.5f, 0.5f}, {1.0f, 0, 0.0f}, color2}, {{0.5f, 0.5f, -0.5f}, {1.0f, 0, 0.0f}, color2}, {{0.5f, -0.5f, -0.5f}, {1.0f, 0, 0.0f}, color2},
-	
-	{{-0.5f, 0.5f, -0.5f}, {-1.0f, 0, 0.0f}, color3}, {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0, 0.0f}, color3}, {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0, 0.0f}, color3},
-	{{-0.5f, 0.5f, -0.5f}, {-1.0f, 0, 0.0f}, color3}, {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0, 0.0f}, color3}, {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0, 0.0f}, color3},
-	
-	{{0.5f, 0.5f, -0.5f}, {0, 0, -1.0f}, color4},  {{-0.5f, -0.5f, -0.5f}, {0, 0, -1.0f}, color4}, {{0.5f, -0.5f, -0.5f}, {0, 0, -1.0f}, color4},
-	{{0.5f, 0.5f, -0.5f}, {0, 0, -1.0f}, color4}, {{-0.5f, 0.5f, -0.5f}, {0, 0, -1.0f}, color4}, {{-0.5f, -0.5f, -0.5f}, {0, 0, -1.0f}, color4},
-
-	{{-0.5f, 0.5f, -0.5f}, {0, 1.0f, 0}, color5},  {{0.5f, 0.5f, -0.5f}, {0, 1.0f, 0}, color5}, {{0.5f, 0.5f, 0.5f}, {0, 1.0f, 0}, color5},
-	{{-0.5f, 0.5f, -0.5f}, {0, 1.0f, 0}, color5},  {{0.5f, 0.5f, 0.5f}, {0, 1.0f, 0}, color5}, {{-0.5f, 0.5f, 0.5f}, {0, 1.0f, 0}, color5},
-
-	{{-0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}, color6},  {{0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}, color6}, {{0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}, color6},
-	{{-0.5f, -0.5f, -0.5f}, {0, -1.0f, 0}, color6},  {{-0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}, color6}, {{0.5f, -0.5f, 0.5f}, {0, -1.0f, 0}, color6},
-	
-		//plane
-	{{-500.0f, 0.0f, -500.f}, {0, 1.0f, 0}, colorPlane},  {{500.f, 0.0f, -500.f}, {0, 1.0f, 0}, colorPlane}, {{500.f, 0.f, 500.f}, {0, 1.0f, 0}, colorPlane},
-	{{-500.f, 0.0f, -500.f}, {0, 1.0f, 0}, colorPlane},  {{500.f, 0.0f, 500.f}, {0, 1.0f, 0}, colorPlane}, {{-500.f, 0.f, 500.f}, {0, 1.0f, 0}, colorPlane},
-
-	};
+	std::vector<Vertex> m_mainVertices;
+	std::vector<uint32_t> m_mainIndices;
 
 	DefaultResource m_screenTextures[k_nSwapChainBuffers];
 	DefaultResource m_depthTextures[k_nSwapChainBuffers];
@@ -99,9 +70,10 @@ private:
 		DirectX::XMFLOAT4X4 WorldMatrix;
 		DirectX::XMFLOAT4X4 ViewProjMatrix;
 		DirectX::XMFLOAT3 LightPosition;
-	} cbCameraParams;
+	} m_cbCameraParams;
 	ConstantBuffer<CBCameraParams> m_constantBuffer[k_nSwapChainBuffers];
 	DefaultResource m_vertexInputBuffer;
+	DefaultResource m_indexInputBuffer;
 
 	GraphicsPipeline m_finalRenderPipeline;
 	RootSignature m_rootSignature;
@@ -113,5 +85,6 @@ private:
 
 	D3D12_VIEWPORT m_screenViewport;
 	D3D12_RECT m_screenScissor;
+	Assimp::Importer m_assetImporter;
 };
 }

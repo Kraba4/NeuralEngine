@@ -1,5 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/external/glfw/include)
 include_directories(${CMAKE_SOURCE_DIR}/external)
+include_directories(${CMAKE_SOURCE_DIR}/external/assimp)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 link_directories(${CMAKE_SOURCE_DIR}/external/glfw)
 
@@ -10,3 +11,4 @@ set_target_properties(neural PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_R
 target_link_libraries(neural PRIVATE glfw3)
 target_link_libraries(neural PRIVATE d3d12)
 target_link_libraries(neural PRIVATE dxgi)
+target_link_libraries(neural PRIVATE assimp)

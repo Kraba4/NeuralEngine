@@ -107,16 +107,6 @@ void DX12RenderEngine::createCommandAllocators()
 	}
 }
 
-void DX12RenderEngine::initialCommands()
-{
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_vertexInputBuffer.getID3D12Resource(),
-		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-	m_commandList->ResourceBarrier(1, &barrier);
-
-	m_vertexInputBuffer.uploadData(m_commandList.Get(), mesh.data());
-}
-
-
 void DX12RenderEngine::createCommandListAndSendInitialCommands()
 {
 	DX_CALL(m_mainDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
