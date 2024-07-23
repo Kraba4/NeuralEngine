@@ -158,6 +158,24 @@ void DX12RenderEngine::render(const Timer& a_timer)
     m_commandList->SetGraphicsRoot32BitConstant(0, 1, 0);
     const auto& meshFlat = m_sceneManager.getMeshInfo("flat");
     m_commandList->DrawIndexedInstanced(meshFlat.indexCount, 1, meshFlat.startIndex, meshFlat.startVertex, 0);
+    renderGUI();
     endFrame();
+}
+void DX12RenderEngine::renderGUI() {
+    ImGui_ImplDX12_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    {
+        ImGui::Begin("Render settings");
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::SliderFloat("Rotation angle", &m_settings.rotatingTimeY, 0, DirectX::XM_2PI);
+        ImGui::SliderInt("Rotation speed", &m_settings.rotateSpeedY, -10, 10);
+        ImGui::Checkbox("Enable rotating", &m_settings.enableRotating);
+        ImGui::NewLine();
+
+        ImGui::End();
+    }
+    ImGui::Render();
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
 }
 }

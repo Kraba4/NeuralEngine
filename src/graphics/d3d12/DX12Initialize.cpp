@@ -26,6 +26,7 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
     initializeResources();
     initializePipelines();
     createCommandListAndSendInitialCommands();
+    initializeDX12ImGui();
 
     m_screenViewport = { .TopLeftX = 0,
                          .TopLeftY = 0,
@@ -67,7 +68,7 @@ void DX12RenderEngine::recreateSwapChain()
         .BufferDesc = {.Width = m_windowWidth,
                         .Height = m_windowHeight,
                         .RefreshRate = {.Numerator = 60, .Denominator = 1 },
-                        .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+                        .Format = k_swapChainFormat,
                         .ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
                         .Scaling = DXGI_MODE_SCALING_UNSPECIFIED
                       },
@@ -124,6 +125,13 @@ void DX12RenderEngine::createFence()
 {
     m_mainDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_framesFence));
     NAME_DX_OBJECT(m_framesFence, L"FrameFence");
+}
+
+void DX12RenderEngine::initializeDX12ImGui()
+{
+    DescriptorHeap::Handle imguiFontHandle = m_cbvHeap.allocate();
+    ImGui_ImplDX12_Init(m_mainDevice.Get(), k_nSwapChainBuffers, k_swapChainFormat,
+        m_cbvHeap.getID3D12DescriptorHeap(), imguiFontHandle.cpu, imguiFontHandle.gpu);
 }
 
 void DX12RenderEngine::beginFrame()

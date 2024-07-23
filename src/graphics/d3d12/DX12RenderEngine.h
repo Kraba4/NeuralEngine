@@ -10,6 +10,9 @@
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>
 #include <DirectXColors.h>
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_dx12.h>
 
 #include <memory>
 
@@ -30,14 +33,19 @@ private:
     void initialCommands();
     void createCommandListAndSendInitialCommands();
     void createFence();
+    void initializeDX12ImGui();
     void flushFrameBuffers();
     void beginFrame();
     void endFrame();
     void initializePipelines();
     void initializeResources();
-
+ 
+    void renderGUI();
+ 
     static constexpr int k_nSwapChainBuffers = 3;
     static_assert(k_nSwapChainBuffers >= 2);
+
+    static constexpr DXGI_FORMAT k_swapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     HWND m_window;
     uint32_t m_windowWidth;

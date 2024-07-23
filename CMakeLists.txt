@@ -16,6 +16,15 @@ endif()
 project (NeuralEngine CXX)
 set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set(IMGUI_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/imgui.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/imgui_draw.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/imgui_tables.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/imgui_widgets.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/imgui_demo.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/backends/imgui_impl_dx12.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/backends/imgui_impl_glfw.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/misc/cpp/imgui_stdlib.cpp)
 
 add_compile_definitions(D3D12_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/src/graphics/d3d12")
 add_compile_definitions(RESOURCES="${CMAKE_CURRENT_SOURCE_DIR}/resources")

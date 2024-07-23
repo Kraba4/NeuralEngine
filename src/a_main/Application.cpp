@@ -3,6 +3,9 @@
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_dx12.h>
 
 #include <sstream>
 
@@ -58,6 +61,9 @@ void Application::initialize(std::string_view a_name, int a_width, int a_height)
     glfwSetKeyCallback(m_window, onKeyboardPressedBasic);
     glfwSetMouseButtonCallback(m_window, onMouseButtonClickedBasic);
     //glfwSetCursorPosCallback(m_window, onMouseMoveBasic);
+
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOther(m_window, true);
 
     m_renderer = std::make_shared<graphics::DX12RenderEngine>();
     m_renderer->initialize(glfwGetWin32Window(m_window), a_width, a_height);
