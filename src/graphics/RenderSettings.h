@@ -1,5 +1,6 @@
 #pragma once
 #include <a_main/Camera.h>
+#include <string>
 
 namespace neural {
 struct RenderSettings {
@@ -11,5 +12,6 @@ struct RenderSettings {
     double rotateSpeedX = 1;
     double rotateSpeedY = 1;
     Camera camera;
+    std::string meshName = "cat";
 };
 }

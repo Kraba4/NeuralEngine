@@ -7,6 +7,12 @@
 namespace neural::game {
 void GameEngine::processInputs(const AppInput& a_appInput, double dt)
 {
+    if (a_appInput.keyPressed[GLFW_KEY_1]) {
+        m_pRenderSettings->meshName = "cat";
+    }
+    if (a_appInput.keyPressed[GLFW_KEY_2]) {
+        m_pRenderSettings->meshName = "bird";
+    }
 	double rotateAcceleration = 1;
 	if (a_appInput.keyPressed[GLFW_KEY_R]) {
 		m_pRenderSettings->enableRotating = !m_pRenderSettings->enableRotating;
@@ -50,5 +56,6 @@ void GameEngine::processInputs(const AppInput& a_appInput, double dt)
 			camera.moveRight(-cameraSpeed * dt);
 		}
 	}
+
 }
 }

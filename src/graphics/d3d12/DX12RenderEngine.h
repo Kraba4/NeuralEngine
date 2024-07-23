@@ -5,13 +5,11 @@
 #include "DescriptorHeap.h"
 #include "Resource.h"
 #include <a_main/Camera.h>
+#include "SceneManager.h"
 
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>
 #include <DirectXColors.h>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 #include <memory>
 
@@ -20,11 +18,6 @@ namespace neural::graphics {
 
 class DX12RenderEngine : public IRenderEngine {
 public:
-    struct Vertex {
-        DirectX::XMFLOAT3 position;
-        DirectX::XMFLOAT3 normal;
-        DirectX::XMFLOAT2 textureCoordinates;
-    };
     void initialize(HWND a_window, int a_width, int a_height) override;
     void render(const Timer& a_timer) override;
     void shutdown() override;
@@ -61,9 +54,6 @@ private:
     DescriptorHeap m_dsvHeap;
     DescriptorHeap m_cbvHeap;
 
-    std::vector<Vertex> m_mainVertices;
-    std::vector<uint32_t> m_mainIndices;
-
     DefaultResource m_screenTextures[k_nSwapChainBuffers];
     DefaultResource m_depthTextures[k_nSwapChainBuffers];
     struct CBCameraParams {
@@ -72,8 +62,6 @@ private:
         DirectX::XMFLOAT3 LightPosition;
     } m_cbCameraParams;
     ConstantBuffer<CBCameraParams> m_constantBuffer[k_nSwapChainBuffers];
-    DefaultResource m_vertexInputBuffer;
-    DefaultResource m_indexInputBuffer;
 
     GraphicsPipeline m_finalRenderPipeline;
     RootSignature m_rootSignature;
@@ -85,6 +73,7 @@ private:
 
     D3D12_VIEWPORT m_screenViewport;
     D3D12_RECT m_screenScissor;
-    Assimp::Importer m_assetImporter;
+
+    SceneManager m_sceneManager;
 };
 }
