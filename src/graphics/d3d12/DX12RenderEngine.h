@@ -3,9 +3,12 @@
 #include "GraphicsPipeline.h"
 #include "RootSignature.h"
 #include "DescriptorHeap.h"
-#include "Resource.h"
+//#include "Resource.h"
 #include <a_main/Camera.h>
 #include "SceneManager.h"
+#include <graphics/d3d12/resource_manager/ResourceManager.h>
+#include <graphics/d3d12/resource_manager/Texture.h>
+#include <graphics/d3d12/resource_manager/ConstantBuffer.h>
 
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>
@@ -39,11 +42,11 @@ private:
     void beginFrame();
     void endFrame();
     void initializePipelines();
-    void initializeResources();
- 
+    void initializeFrameResources(uint32_t a_frameIndex);
+    void initializeUniqueResources();
     void renderGUI();
  
-    static constexpr int k_nSwapChainBuffers = 3;
+    static constexpr uint32_t k_nSwapChainBuffers = 3;
     static_assert(k_nSwapChainBuffers >= 2);
 
     static constexpr DXGI_FORMAT k_swapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -59,18 +62,18 @@ private:
     ComPtr<ID3D12CommandQueue> m_commandQueue;
     ComPtr<IDXGISwapChain> m_swapChain;
 
-    DescriptorHeap m_rtvHeap;
-    DescriptorHeap m_dsvHeap;
-    DescriptorHeap m_cbvHeap;
+    //DescriptorHeap m_rtvHeap;
+    //DescriptorHeap m_dsvHeap;
+    //DescriptorHeap m_cbvHeap;
 
-    DefaultResource m_screenTextures[k_nSwapChainBuffers];
-    DefaultResource m_depthTextures[k_nSwapChainBuffers];
+    //DefaultResource m_screenTextures[k_nSwapChainBuffers];
+    //DefaultResource m_depthTextures[k_nSwapChainBuffers];
     struct CBCameraParams {
         DirectX::XMFLOAT4X4 WorldMatrix;
         DirectX::XMFLOAT4X4 ViewProjMatrix;
         DirectX::XMFLOAT3 LightPosition;
     } m_cbCameraParams;
-    ConstantBuffer<CBCameraParams> m_constantBuffer[k_nSwapChainBuffers];
+    //ConstantBuffer<CBCameraParams> m_constantBuffer[k_nSwapChainBuffers];
 
     GraphicsPipeline m_finalRenderPipeline;
     RootSignature m_rootSignature;
@@ -84,6 +87,7 @@ private:
     D3D12_RECT m_screenScissor;
 
     SceneManager m_sceneManager;
+    ResourceManager m_resourceManager;
 
     ImGuizmo::OPERATION m_currentGizmoOperation;
     ImGuizmo::MODE m_currentGizmoMode;

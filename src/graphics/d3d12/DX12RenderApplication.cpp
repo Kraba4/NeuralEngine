@@ -5,58 +5,39 @@
 #include <cmath>
 
 namespace neural::graphics {
-void DX12RenderEngine::initializeResources()
+void DX12RenderEngine::initializeFrameResources(uint32_t a_frameIndex)
 {
-    for (int i = 0; i < k_nSwapChainBuffers; ++i) {
-        ID3D12Resource* swapchainBuffer;
-        DX_CALL(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&swapchainBuffer)));
-        m_screenTextures[i].initialize(m_mainDevice.Get(), swapchainBuffer);
-        NAME_DX_OBJECT_INDEXED(m_screenTextures[i].getID3D12Resource(), L"SwapchainBuffer", i);
+    ID3D12Resource* swapchainBuffer;
+    DX_CALL(m_swapChain->GetBuffer(a_frameIndex, IID_PPV_ARGS(&swapchainBuffer)));
+    m_resourceManager.createTextureInFrame("mainRT", a_frameIndex, swapchainBuffer);
 
-        m_screenTextures[i].setHeapForRenderTargetViews(&m_rtvHeap);
-        m_screenTextures[i].addRenderTargetView("default");
-    }
+    m_resourceManager.createTextureInFrame("mainDepth", a_frameIndex, {
+            .format = DXGI_FORMAT_D32_FLOAT,
+            .width = m_windowWidth,
+            .height = m_windowHeight,
+            .clearValue = D3D12_CLEAR_VALUE {
+                .Format = DXGI_FORMAT_D32_FLOAT,
+                .DepthStencil = {.Depth = 1.0f, .Stencil = 0}
+            },
+            .usageFlags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL,
+            .initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE,
+    });
 
-    for (int i = 0; i < k_nSwapChainBuffers; ++i)
-    {
-        m_depthTextures[i].initialize(m_mainDevice.Get(),
-            {
-                .resourceDesc = {
-                    .Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-                    .Alignment = 0,
-                    .Width = m_windowWidth,
-                    .Height = m_windowHeight,
-                    .DepthOrArraySize = 1,
-                    .MipLevels = 1,
-                    .Format = DXGI_FORMAT_D32_FLOAT,
-                    .SampleDesc = {.Count = 1, .Quality = 0 },
-                    .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-                    .Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-                },
-                .initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                .clearValue = D3D12_CLEAR_VALUE {
-                    .Format = DXGI_FORMAT_D32_FLOAT,
-                    .DepthStencil = {.Depth = 1.0f, .Stencil = 0}
-                }
-            });
-        NAME_DX_OBJECT_INDEXED(m_depthTextures[i].getID3D12Resource(), L"DepthBuffer", i);
+    m_resourceManager.createConstantBufferInFrame("cb", a_frameIndex, {
+        .size = 1,
+        .elementSize = sizeof(CBCameraParams)
+    });
+}
 
-        m_depthTextures[i].setHeapForDepthStencilViews(&m_dsvHeap);
-        m_depthTextures[i].addDepthStencilView("default");
-    }
-
-    for (int i = 0; i < k_nSwapChainBuffers; ++i)
-    {
-        m_constantBuffer[i].initialize(m_mainDevice.Get(), &m_cbvHeap, 1);
-        NAME_DX_OBJECT_INDEXED(m_constantBuffer[i].getID3D12Resource(), L"ConstantBuffer", i);
-    }
+void DX12RenderEngine::initializeUniqueResources()
+{
     m_sceneManager.initialize(m_mainDevice.Get());
     m_sceneManager.loadMeshFromFile("cat", RESOURCES"/models/Cat_Sitting.fbx",
         { .rotation = {90, -90, 0}, .scale = 0.5 });
     m_sceneManager.loadMeshFromFile("bird", RESOURCES"/models/Bird.obj",
         { .rotation = {0, 0, 0}, .scale = 0.2 });
     std::vector<SceneManager::Vertex> planeVertices = {
-        {{-1, 0, 1}, {0, 1, 0}, {0,0}}, 
+        {{-1, 0, 1}, {0, 1, 0}, {0,0}},
         {{1, 0, 1}, {0, 1, 0}, {0,0}},
         {{-1, 0, -1}, {0, 1, 0}, {0,0}},
         {{1, 0, -1}, {0, 1, 0}, {0,0}},
@@ -107,7 +88,7 @@ void DX12RenderEngine::initialCommands()
 void DX12RenderEngine::render(const Timer& a_timer)
 {
     beginFrame();
-    const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
+    const uint64_t frameIndex = m_currentFrame % k_nSwapChainBuffers;
     m_settings.camera.updateViewMatrix();
     m_cbCameraParams.LightPosition = { 0, 20, 0 };
 
@@ -115,10 +96,10 @@ void DX12RenderEngine::render(const Timer& a_timer)
         DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix)));
     DirectX::XMStoreFloat4x4(&m_cbCameraParams.ViewProjMatrix, 
         DirectX::XMMatrixMultiplyTranspose(m_settings.camera.getView(), m_settings.camera.getProj()));
-    m_constantBuffer[currentFrameBufferIndex].uploadData(&m_cbCameraParams);
+    m_resourceManager.getConstantBuffer("cb", frameIndex).uploadData(&m_cbCameraParams);
 
-    auto currentBufferView = m_screenTextures[currentFrameBufferIndex].getRenderTargetView("default", 0);
-    auto& currentDepthBufferView = m_depthTextures[currentFrameBufferIndex].getDepthStencilView("default");
+    auto currentBufferView = m_resourceManager.getTexture("mainRT", frameIndex).getRTV();
+    auto currentDepthBufferView = m_resourceManager.getTexture("mainDepth", frameIndex).getDSV();
     float color[] = { 0, 0, 0, 1 };
     m_commandList->ClearRenderTargetView(currentBufferView.cpu, color, 0, nullptr);
     m_commandList->ClearDepthStencilView(currentDepthBufferView.cpu,
@@ -133,7 +114,7 @@ void DX12RenderEngine::render(const Timer& a_timer)
 
     m_commandList->SetGraphicsRoot32BitConstant(0, 0, 0);
     m_commandList->SetGraphicsRootConstantBufferView(1,
-        m_constantBuffer[currentFrameBufferIndex].getID3D12Resource()->GetGPUVirtualAddress());
+        m_resourceManager.getConstantBuffer("cb", frameIndex).getID3D12Resource()->GetGPUVirtualAddress());
 
     const auto& vertexBufferView = m_sceneManager.getVertexBufferView();
     const auto& indexBufferView = m_sceneManager.getIndexBufferView();
@@ -152,59 +133,4 @@ void DX12RenderEngine::render(const Timer& a_timer)
     renderGUI();
     endFrame();
 }
-
-//void EditTransform(Camera& camera)
-//{
-//    Camera& camera = m_settings
-//    static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
-//    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
-//    //if (ImGui::IsKeyPressed(90))
-//    //    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-//    //if (ImGui::IsKeyPressed(69))
-//    //    mCurrentGizmoOperation = ImGuizmo::ROTATE;
-//    //if (ImGui::IsKeyPressed(82)) // r Key
-//    //    mCurrentGizmoOperation = ImGuizmo::SCALE;
-//    if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
-//        mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-//    ImGui::SameLine();
-//    if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
-//        mCurrentGizmoOperation = ImGuizmo::ROTATE;
-//    ImGui::SameLine();
-//    if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
-//        mCurrentGizmoOperation = ImGuizmo::SCALE;
-//    float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-//    ImGuizmo::DecomposeMatrixToComponents(matrix.m16, matrixTranslation, matrixRotation, matrixScale);
-//    ImGui::InputFloat3("Tr", matrixTranslation);
-//    ImGui::InputFloat3("Rt", matrixRotation);
-//    ImGui::InputFloat3("Sc", matrixScale);
-//    ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix.m16);
-//
-//    if (mCurrentGizmoOperation != ImGuizmo::SCALE)
-//    {
-//        if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
-//            mCurrentGizmoMode = ImGuizmo::LOCAL;
-//        ImGui::SameLine();
-//        if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
-//            mCurrentGizmoMode = ImGuizmo::WORLD;
-//    }
-//    static bool useSnap(false);
-//    ImGui::Checkbox("", &useSnap);
-//    ImGui::SameLine();
-//    //vec_t snap;
-//    //switch (mCurrentGizmoOperation)
-//    //{
-//    //case ImGuizmo::TRANSLATE:
-//    //    snap = config.mSnapTranslation;
-//    //    ImGui::InputFloat3("Snap", &snap.x);
-//    //    break;
-//    //case ImGuizmo::ROTATE:
-//    //    snap = config.mSnapRotation;
-//    //    ImGui::InputFloat("Angle Snap", &snap.x);
-//    //    break;
-//    //case ImGuizmo::SCALE:
-//    //    snap = config.mSnapScale;
-//    //    ImGui::InputFloat("Scale Snap", &snap.x);
-//    //    break;
-//    ///
-//}
 }

@@ -19,11 +19,11 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
     recreateSwapChain();
     createCommandAllocators();
     createFence();
-
-    m_rtvHeap.initialize(m_mainDevice.Get(), k_nSwapChainBuffers, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, false);
-    m_dsvHeap.initialize(m_mainDevice.Get(), k_nSwapChainBuffers, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, false);
-    m_cbvHeap.initialize(m_mainDevice.Get(), k_nSwapChainBuffers, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 64, true);
-    initializeResources();
+    m_resourceManager.initialize(m_mainDevice.Get(), k_nSwapChainBuffers, 64, 64, 64);
+    for (uint32_t frameIndex = 0; frameIndex < k_nSwapChainBuffers; ++frameIndex) {
+        initializeFrameResources(frameIndex);
+    }
+    initializeUniqueResources();
     initializePipelines();
     createCommandListAndSendInitialCommands();
     initializeDX12ImGui();
@@ -131,9 +131,9 @@ void DX12RenderEngine::createFence()
 
 void DX12RenderEngine::initializeDX12ImGui()
 {
-    DescriptorHeap::Handle imguiFontHandle = m_cbvHeap.allocate();
+    DescriptorHeap::Handle imguiFontHandle = m_resourceManager.getCBVHeap()->allocate();
     ImGui_ImplDX12_Init(m_mainDevice.Get(), k_nSwapChainBuffers, k_swapChainFormat,
-        m_cbvHeap.getID3D12DescriptorHeap(), imguiFontHandle.cpu, imguiFontHandle.gpu);
+        m_resourceManager.getCBVHeap()->getID3D12DescriptorHeap(), imguiFontHandle.cpu, imguiFontHandle.gpu);
 }
 
 void DX12RenderEngine::beginFrame()
@@ -152,7 +152,7 @@ void DX12RenderEngine::beginFrame()
     DX_CALL(currentCommandAllocator->Reset());
     DX_CALL(m_commandList->Reset(currentCommandAllocator.Get(), nullptr));
 
-    auto& currentBuffer = m_screenTextures[currentFrameBufferIndex];
+    auto& currentBuffer = m_resourceManager.getTexture("mainRT", currentFrameBufferIndex);
 
     auto currentBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(currentBuffer.getID3D12Resource(),
         D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -165,7 +165,7 @@ void DX12RenderEngine::beginFrame()
 void DX12RenderEngine::endFrame()
 {
     const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
-    auto& currentBuffer = m_screenTextures[currentFrameBufferIndex];
+    auto& currentBuffer = m_resourceManager.getTexture("mainRT", currentFrameBufferIndex);
     auto currentBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(currentBuffer.getID3D12Resource(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     m_commandList->ResourceBarrier(1, &currentBufferBarrier);
