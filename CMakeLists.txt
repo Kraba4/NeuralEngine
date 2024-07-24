@@ -25,6 +25,8 @@ set(IMGUI_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/backends/imgui_impl_dx12.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/backends/imgui_impl_glfw.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/misc/cpp/imgui_stdlib.cpp)
+set(IMGUIZMO_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imguizmo/Imguizmo.cpp)
 
 add_compile_definitions(D3D12_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/src/graphics/d3d12")
 add_compile_definitions(RESOURCES="${CMAKE_CURRENT_SOURCE_DIR}/resources")

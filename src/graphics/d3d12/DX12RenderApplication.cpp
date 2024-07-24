@@ -51,8 +51,10 @@ void DX12RenderEngine::initializeResources()
         NAME_DX_OBJECT_INDEXED(m_constantBuffer[i].getID3D12Resource(), L"ConstantBuffer", i);
     }
     m_sceneManager.initialize(m_mainDevice.Get());
-    m_sceneManager.loadMeshFromFile("cat", RESOURCES"/models/Cat_Sitting.fbx", { .rotation = {0, -90, 0} });
-    m_sceneManager.loadMeshFromFile("bird", RESOURCES"/models/Bird.obj", { .rotation = {0, 0, 0}, .scale = 0.2 });
+    m_sceneManager.loadMeshFromFile("cat", RESOURCES"/models/Cat_Sitting.fbx",
+        { .rotation = {90, -90, 0}, .scale = 0.5 });
+    m_sceneManager.loadMeshFromFile("bird", RESOURCES"/models/Bird.obj",
+        { .rotation = {0, 0, 0}, .scale = 0.2 });
     std::vector<SceneManager::Vertex> planeVertices = {
         {{-1, 0, 1}, {0, 1, 0}, {0,0}}, 
         {{1, 0, 1}, {0, 1, 0}, {0,0}},
@@ -108,20 +110,9 @@ void DX12RenderEngine::render(const Timer& a_timer)
     const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
     m_settings.camera.updateViewMatrix();
     m_cbCameraParams.LightPosition = { 0, 20, 0 };
-    if (m_settings.enableRotating) {
-        m_settings.rotatingTimeX += a_timer.getLastDeltaTime() * m_settings.rotateSpeedX;
-        m_settings.rotatingTimeY += a_timer.getLastDeltaTime() * m_settings.rotateSpeedY;
-    }
-    //float angleX = std::fmod(static_cast<float>(m_settings.rotatingTimeX), DirectX::XM_2PI);
-    //float angleY = std::fmod(static_cast<float>(m_settings.rotatingTimeY), DirectX::XM_2PI);
-    float angleX = DirectX::XMConvertToRadians(0);
-    float angleY = std::fmod(static_cast<float>(m_settings.rotatingTimeY), DirectX::XM_2PI);
-    DirectX::XMMATRIX rotation = DirectX::XMMatrixMultiply(DirectX::XMMatrixRotationX(angleX),
-        DirectX::XMMatrixRotationY(angleY));
-    DirectX::XMMATRIX cubeWorld = DirectX::XMMatrixMultiplyTranspose(
-        rotation, DirectX::XMMatrixTranslation(0, 3, 10));
-    cubeWorld = DirectX::XMMatrixMultiply(cubeWorld, DirectX::XMMatrixScaling(0.5, 0.5, 0.5));
-    DirectX::XMStoreFloat4x4(&m_cbCameraParams.WorldMatrix, cubeWorld);
+
+    DirectX::XMStoreFloat4x4(&m_cbCameraParams.WorldMatrix,
+        DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix)));
     DirectX::XMStoreFloat4x4(&m_cbCameraParams.ViewProjMatrix, 
         DirectX::XMMatrixMultiplyTranspose(m_settings.camera.getView(), m_settings.camera.getProj()));
     m_constantBuffer[currentFrameBufferIndex].uploadData(&m_cbCameraParams);
@@ -161,21 +152,59 @@ void DX12RenderEngine::render(const Timer& a_timer)
     renderGUI();
     endFrame();
 }
-void DX12RenderEngine::renderGUI() {
-    ImGui_ImplDX12_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    {
-        ImGui::Begin("Render settings");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::SliderFloat("Rotation angle", &m_settings.rotatingTimeY, 0, DirectX::XM_2PI);
-        ImGui::SliderInt("Rotation speed", &m_settings.rotateSpeedY, -10, 10);
-        ImGui::Checkbox("Enable rotating", &m_settings.enableRotating);
-        ImGui::NewLine();
 
-        ImGui::End();
-    }
-    ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
-}
+//void EditTransform(Camera& camera)
+//{
+//    Camera& camera = m_settings
+//    static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
+//    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+//    //if (ImGui::IsKeyPressed(90))
+//    //    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+//    //if (ImGui::IsKeyPressed(69))
+//    //    mCurrentGizmoOperation = ImGuizmo::ROTATE;
+//    //if (ImGui::IsKeyPressed(82)) // r Key
+//    //    mCurrentGizmoOperation = ImGuizmo::SCALE;
+//    if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+//        mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+//    ImGui::SameLine();
+//    if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+//        mCurrentGizmoOperation = ImGuizmo::ROTATE;
+//    ImGui::SameLine();
+//    if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+//        mCurrentGizmoOperation = ImGuizmo::SCALE;
+//    float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+//    ImGuizmo::DecomposeMatrixToComponents(matrix.m16, matrixTranslation, matrixRotation, matrixScale);
+//    ImGui::InputFloat3("Tr", matrixTranslation);
+//    ImGui::InputFloat3("Rt", matrixRotation);
+//    ImGui::InputFloat3("Sc", matrixScale);
+//    ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix.m16);
+//
+//    if (mCurrentGizmoOperation != ImGuizmo::SCALE)
+//    {
+//        if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+//            mCurrentGizmoMode = ImGuizmo::LOCAL;
+//        ImGui::SameLine();
+//        if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+//            mCurrentGizmoMode = ImGuizmo::WORLD;
+//    }
+//    static bool useSnap(false);
+//    ImGui::Checkbox("", &useSnap);
+//    ImGui::SameLine();
+//    //vec_t snap;
+//    //switch (mCurrentGizmoOperation)
+//    //{
+//    //case ImGuizmo::TRANSLATE:
+//    //    snap = config.mSnapTranslation;
+//    //    ImGui::InputFloat3("Snap", &snap.x);
+//    //    break;
+//    //case ImGuizmo::ROTATE:
+//    //    snap = config.mSnapRotation;
+//    //    ImGui::InputFloat("Angle Snap", &snap.x);
+//    //    break;
+//    //case ImGuizmo::SCALE:
+//    //    snap = config.mSnapScale;
+//    //    ImGui::InputFloat("Scale Snap", &snap.x);
+//    //    break;
+//    ///
+//}
 }

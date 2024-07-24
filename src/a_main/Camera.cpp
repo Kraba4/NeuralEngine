@@ -151,9 +151,19 @@ DirectX::XMFLOAT4X4 Camera::getView4x4f() const
     return m_view;
 }
 
-DirectX::XMFLOAT4X4 Camera::getProj4x4f() const
+DirectX::XMFLOAT4X4 Camera::getProj4x4f() const 
 {
     return m_proj;
+}
+
+float* Camera::getViewPtr()
+{
+    return &m_view._11;
+}
+
+float* Camera::getProjPtr()
+{
+    return &m_proj._11;
 }
 
 void Camera::moveRight(float d)

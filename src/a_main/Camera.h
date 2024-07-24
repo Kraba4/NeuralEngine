@@ -48,6 +48,8 @@ public:
     DirectX::XMMATRIX getProj() const;
     DirectX::XMFLOAT4X4 getView4x4f() const;
     DirectX::XMFLOAT4X4 getProj4x4f() const;
+    float* getViewPtr();
+    float* getProjPtr();
 
     // Strafe/Walk the camera a distance d.
     void moveRight(float d);

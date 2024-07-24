@@ -13,6 +13,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_dx12.h>
+#include <ImGuizmo.h>
 
 #include <memory>
 
@@ -83,5 +84,11 @@ private:
     D3D12_RECT m_screenScissor;
 
     SceneManager m_sceneManager;
+
+    ImGuizmo::OPERATION m_currentGizmoOperation;
+    ImGuizmo::MODE m_currentGizmoMode;
+    DirectX::XMFLOAT4X4* m_selectedMatrix;
+
+    DirectX::XMFLOAT4X4 m_worldMatrix;
 };
 }
