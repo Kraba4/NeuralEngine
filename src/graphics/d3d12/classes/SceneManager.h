@@ -1,7 +1,8 @@
 #pragma once
-#include "Resource.h"
 #include <DirectXMath.h>
 #include <utils/Macros.h>
+#include <graphics/d3d12/CommonGraphicsHeaders.h>
+#include "Resources.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -32,7 +33,7 @@ public:
                   const std::vector<uint32_t>& a_indices,
                   MeshTransform a_transform = {});
     void loadMeshFromFile(const char* a_meshName, const char* a_path, MeshTransform a_transform = {});
-    void uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList);
+    void uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList, ResourceManager* a_pResourceManager);
 
     ID3D12Resource* getVertexBuffer() {
         return m_vertexBuffer.getID3D12Resource();
@@ -56,8 +57,8 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<uint32_t> m_indices;
 
-    DefaultResource m_vertexBuffer;
-    DefaultResource m_indexBuffer;
+    Buffer m_vertexBuffer;
+    Buffer m_indexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 };

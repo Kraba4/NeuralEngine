@@ -11,5 +11,6 @@ struct RenderSettings {
     int rotateSpeedY = 1;
     Camera camera;
     std::string meshName = "cat";
+    bool showGUI = true;
 };
 }

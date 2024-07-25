@@ -1,10 +1,12 @@
 #pragma once
-#include <graphics/d3d12/DescriptorHeap.h>
+#include "DescriptorHeap.h"
+#include <graphics/d3d12/CommonGraphicsHeaders.h>
 
 #include <unordered_map>
 
 namespace neural::graphics {
-class ConstantBufferAlpha;
+class ConstantBuffer;
+class Buffer;
 class Texture;
 
 class ResourceManager {
@@ -14,12 +16,22 @@ public:
         uint64_t offset = 0;
     };
 
-    struct BufferCreateInfo {
+    struct ConstantBufferCreateInfo {
         uint64_t size = 0;
         uint64_t elementSize = 0;
         uint64_t aligment = 0; //??
         D3D12_RESOURCE_FLAGS usageFlags = D3D12_RESOURCE_FLAG_NONE;
         //D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+        HeapInfo heapInfo = {};
+    };
+
+    struct BufferCreateInfo {
+        uint64_t size = 0;
+        uint64_t elementSize = 0;
+        uint64_t aligment = 0; //??
+        D3D12_RESOURCE_FLAGS usageFlags = D3D12_RESOURCE_FLAG_NONE;
+        D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+        D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT;
         HeapInfo heapInfo = {};
     };
 
@@ -50,14 +62,14 @@ public:
     void initialize(ID3D12Device* a_device, uint32_t a_nFrames,
         uint32_t a_rtvHeapSize, uint32_t a_dsvHeapSize, uint32_t a_cbvHeapSize);
 
-    void createConstantBufferInFrame(std::string a_name, uint32_t a_frame, BufferCreateInfo a_createInfo);
-    ConstantBufferAlpha& getConstantBuffer(std::string a_name, uint32_t a_frame) {
+    ConstantBuffer& createConstantBufferInFrame(std::string a_name, uint32_t a_frame, ConstantBufferCreateInfo a_createInfo);
+    ConstantBuffer& getConstantBuffer(std::string a_name, uint32_t a_frame) {
         return m_frameResources[a_frame].m_constantBuffers[a_name];
     }
-    void createStructuredBuffer(std::string a_name, BufferCreateInfo a_createInfo);
+    Buffer& createBufferInUnique(std::string a_name, BufferCreateInfo a_createInfo);
 
-    void createTextureInFrame(std::string a_name, uint32_t a_frame, TextureCreateInfo a_createInfo);
-    void createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource);
+    Texture& createTextureInFrame(std::string a_name, uint32_t a_frame, TextureCreateInfo a_createInfo);
+    Texture& createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource);
     Texture& getTexture(std::string a_name, uint32_t a_frame) {
         return m_frameResources[a_frame].m_textures[a_name];
     }
@@ -88,11 +100,12 @@ private:
     DescriptorHeap m_cbvHeap;
     ID3D12Device* m_device;
 
-    struct FrameResources {
-        std::unordered_map<std::string, ConstantBufferAlpha> m_constantBuffers;
-        //std::unordered_map<std::string, StructuredBuffer> m_structuredBuffers;
+    struct Resources {
+        std::unordered_map<std::string, ConstantBuffer> m_constantBuffers;
+        std::unordered_map<std::string, Buffer> m_buffers;
         std::unordered_map<std::string, Texture> m_textures;
     };
-    std::unique_ptr<FrameResources[]> m_frameResources;
+    std::unique_ptr<Resources[]> m_frameResources;
+    Resources m_uniqueResources;
 };
 }

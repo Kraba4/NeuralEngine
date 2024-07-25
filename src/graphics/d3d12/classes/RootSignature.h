@@ -2,6 +2,7 @@
 
 #include <utils/Macros.h>
 #include <utils/Utils.h>
+#include <graphics/d3d12/CommonGraphicsHeaders.h>
 
 #include <d3d12.h>
 #include <wrl.h>

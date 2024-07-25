@@ -97,32 +97,50 @@ void SceneManager::loadMeshFromFile(const char* a_meshName, const char* a_path, 
 #endif
     m_meshes[a_meshName] = meshInfo;
 }
-void SceneManager::uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList) {
-    m_vertexBuffer.initialize(m_device, {
-            .resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(m_vertices[0]) * m_vertices.size()),
+void SceneManager::uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList, 
+                                     ResourceManager* a_pResourceManager) {
+    m_vertexBuffer = a_pResourceManager->createBufferInUnique("VertexBuffer", {
+        .size = m_vertices.size(),
+        .elementSize = sizeof(m_vertices[0]),
         });
-    NAME_DX_OBJECT(m_vertexBuffer.getID3D12Resource(), L"VertexBuffer");
 
-    m_indexBuffer.initialize(m_device, {
-            .resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(m_indices[0]) * m_indices.size())
+    m_indexBuffer = a_pResourceManager->createBufferInUnique("IndexBuffer", {
+        .size = m_indices.size(),
+        .elementSize = sizeof(m_indices[0]),
         });
-    NAME_DX_OBJECT(m_indexBuffer.getID3D12Resource(), L"IndexBuffer");
 
-    m_vertexBuffer.initializeUpload(m_device);
-    m_indexBuffer.initializeUpload(m_device);
+    Buffer& uploadVertex = a_pResourceManager->createBufferInUnique("VertexBufferUpload", {
+        .size = m_vertices.size(),
+        .elementSize = sizeof(m_vertices[0]),
+        .initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+        .heapType = D3D12_HEAP_TYPE_UPLOAD
+        });
+
+    Buffer& uploadIndex = a_pResourceManager->createBufferInUnique("IndexBufferUpload", {
+        .size = m_indices.size(),
+        .elementSize = sizeof(m_indices[0]),
+        .initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+        .heapType = D3D12_HEAP_TYPE_UPLOAD
+        });
 
     D3D12_RESOURCE_BARRIER barriers[] = {
     CD3DX12_RESOURCE_BARRIER::Transition(m_vertexBuffer.getID3D12Resource(),
-    D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST),
+    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON),
     CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer.getID3D12Resource(),
-    D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST)
+    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON)
     };
     a_commandList->ResourceBarrier(_countof(barriers), barriers);
 
-    m_vertexBuffer.uploadData(a_commandList, m_vertices.data());
-    m_indexBuffer.uploadData(a_commandList, m_indices.data());
+    uploadVertex.mapData(); // mb do when create
+    uploadIndex.mapData();
 
-    m_vertexBufferView = m_vertexBuffer.getVertexBufferView(sizeof(Vertex));
+    uploadVertex.uploadData(m_vertices.data());
+    uploadIndex.uploadData(m_indices.data());
+
+    a_commandList->CopyResource(m_vertexBuffer.getID3D12Resource(), uploadVertex.getID3D12Resource());
+    a_commandList->CopyResource(m_indexBuffer.getID3D12Resource(), uploadIndex.getID3D12Resource());
+
+    m_vertexBufferView = m_vertexBuffer.getVertexBufferView();
     m_indexBufferView = m_indexBuffer.getIndexBufferView();
 }
 }

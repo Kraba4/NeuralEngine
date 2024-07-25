@@ -37,7 +37,10 @@ __debugbreak();                            \
 #endif
 
 #ifdef _DEBUG
-#define NAME_DX_OBJECT(object, name) object->SetName(name)
+#define NAME_DX_OBJECT(object, name) { \
+std::wstring t = name; \
+object->SetName(t.c_str()); \
+}
 #else
 #define NAME_DX_OBJECT(object, name)
 #endif

@@ -1,6 +1,6 @@
 #pragma once 
 #include "ResourceManager.h"
-#include <graphics/d3d12/DescriptorHeap.h>
+#include "DescriptorHeap.h"
 
 #include <unordered_map>
 
@@ -138,11 +138,11 @@ public:
     //}
 
     ~Texture() {
-        if (m_resource) {
-            for (auto& iterator : m_views) {
-                m_pResourceManager->getRTVHeap()->deferredDeallocate(iterator.second);
-            }
-        }
+        //if (m_resource) {
+        //    for (auto& iterator : m_views) {
+        //        m_pResourceManager->getRTVHeap()->deferredDeallocate(iterator.second);
+        //    }
+        //}
     }
 
     struct ViewParams {

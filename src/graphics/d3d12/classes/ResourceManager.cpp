@@ -1,5 +1,5 @@
 #include "ResourceManager.h"
-#include "ConstantBuffer.h"
+#include "Buffer.h"
 #include "Texture.h"
 
 #include <utils/Macros.h>
@@ -19,10 +19,10 @@ void ResourceManager::initialize(ID3D12Device* a_device, uint32_t a_nFrames,
     m_cbvHeap.initialize(a_device, a_nFrames, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, a_cbvHeapSize, true);
     m_device = a_device;
 
-    m_frameResources = std::move(std::make_unique<FrameResources[]>(a_nFrames));
+    m_frameResources = std::move(std::make_unique<Resources[]>(a_nFrames));
 }
 
-void ResourceManager::createConstantBufferInFrame(std::string a_name, uint32_t a_frame, BufferCreateInfo a_createInfo)
+ConstantBuffer& ResourceManager::createConstantBufferInFrame(std::string a_name, uint32_t a_frame, ConstantBufferCreateInfo a_createInfo)
 {
     assert(m_device);
     assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken
@@ -30,10 +30,10 @@ void ResourceManager::createConstantBufferInFrame(std::string a_name, uint32_t a
     assert(a_createInfo.elementSize > 0);
 
     m_frameResources[a_frame].m_constantBuffers[a_name] = {};
-    ConstantBufferAlpha& constantBuffer = m_frameResources[a_frame].m_constantBuffers[a_name];
+    ConstantBuffer& constantBuffer = m_frameResources[a_frame].m_constantBuffers[a_name];
     constantBuffer.m_pResourceManager = this;
     constantBuffer.m_size = a_createInfo.size;
-    constantBuffer.m_elementSize = ConstantBufferAlpha::CalcConstantBufferByteSize(a_createInfo.elementSize);
+    constantBuffer.m_elementSize = ConstantBuffer::CalcConstantBufferByteSize(a_createInfo.elementSize);
  
     auto desc = CD3DX12_RESOURCE_DESC::Buffer(a_createInfo.size * a_createInfo.elementSize,
                                               a_createInfo.usageFlags);
@@ -56,11 +56,37 @@ void ResourceManager::createConstantBufferInFrame(std::string a_name, uint32_t a
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT_INDEXED(constantBuffer.m_resource, wName, a_frame);
+    return constantBuffer;
 }
-void ResourceManager::createStructuredBuffer(std::string a_name, BufferCreateInfo a_createInfo)
+Buffer& ResourceManager::createBufferInUnique(std::string a_name, BufferCreateInfo a_createInfo)
 {
+    assert(m_device);
+    assert(!m_uniqueResources.m_buffers.contains(a_name)); // name is already taken
+    assert(a_createInfo.size > 0);
+    assert(a_createInfo.elementSize > 0);
+
+    m_uniqueResources.m_buffers[a_name] = {};
+    Buffer& buffer = m_uniqueResources.m_buffers[a_name];
+    buffer.m_pResourceManager = this;
+    buffer.m_size = a_createInfo.size;
+    buffer.m_elementSize = a_createInfo.elementSize;
+
+    auto desc = CD3DX12_RESOURCE_DESC::Buffer(a_createInfo.size * a_createInfo.elementSize,
+        a_createInfo.usageFlags);
+    createResource(&buffer.m_resource, {
+        .resourceDesc = &desc,
+        .initialState = a_createInfo.initialState,
+        .clearValue = nullptr,
+        .heapInfo = &a_createInfo.heapInfo,
+        .heapType = a_createInfo.heapType,
+        });
+
+    std::wstring wName(a_name.begin(), a_name.end());
+    NAME_DX_OBJECT(buffer.m_resource, wName);
+    
+    return buffer;
 }
-void ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, TextureCreateInfo a_createInfo)
+Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, TextureCreateInfo a_createInfo)
 {
     assert(m_device);
     assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken
@@ -106,8 +132,10 @@ void ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame,
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT_INDEXED(texture.m_resource, wName, a_frame);
+
+    return texture;
 }
-void ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource)
+Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource)
 {
     assert(m_device);
     assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken
@@ -126,6 +154,8 @@ void ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame,
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT_INDEXED(texture.m_resource, wName, a_frame);
+
+    return texture;
 }
 void ResourceManager::createResource(ID3D12Resource** a_resource, ResourceCreateInfo a_createInfo)
 {

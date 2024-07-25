@@ -2,7 +2,7 @@
 
 #include <utils/Macros.h>
 
-#include "CommonGraphicsHeaders.h"
+#include <graphics/d3d12/CommonGraphicsHeaders.h>
 
 #include <vector>
 #include <memory>

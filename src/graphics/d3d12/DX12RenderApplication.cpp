@@ -81,7 +81,7 @@ void DX12RenderEngine::initializePipelines()
 
 void DX12RenderEngine::initialCommands()
 {
-    m_sceneManager.uploadMeshesOnGPU(m_commandList.Get());
+    m_sceneManager.uploadMeshesOnGPU(m_commandList.Get(), &m_resourceManager);
 }
 
 
@@ -130,7 +130,10 @@ void DX12RenderEngine::render(const Timer& a_timer)
     m_commandList->SetGraphicsRoot32BitConstant(0, 1, 0);
     const auto& meshFlat = m_sceneManager.getMeshInfo("flat");
     m_commandList->DrawIndexedInstanced(meshFlat.indexCount, 1, meshFlat.startIndex, meshFlat.startVertex, 0);
-    renderGUI();
+    
+    if (m_settings.showGUI) {
+        renderGUI();
+    }
     endFrame();
 }
 }

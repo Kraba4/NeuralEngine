@@ -84,7 +84,7 @@ void Application::mainLoop()
         receiveTickInputs(m_window); // g_appInput receives current tick inputs
 
         static bool enableStatisticsFPS = true;
-        if (g_appInput.keyPressed[GLFW_KEY_GRAVE_ACCENT]) enableStatisticsFPS = !enableStatisticsFPS;
+        if (g_appInput.keyPressed[GLFW_KEY_F1]) enableStatisticsFPS = !enableStatisticsFPS;
         showFPS(timer, enableStatisticsFPS);
 
         double dt = timer.calculateDT(glfwGetTime());

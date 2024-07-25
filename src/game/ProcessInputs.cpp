@@ -7,6 +7,9 @@
 namespace neural::game {
 void GameEngine::processInputs(const AppInput& a_appInput, double dt)
 {
+    if (a_appInput.keyPressed[GLFW_KEY_F2]) {
+        m_pRenderSettings->showGUI = !m_pRenderSettings->showGUI;
+    }
     if (a_appInput.keyPressed[GLFW_KEY_1]) {
         m_pRenderSettings->meshName = "cat";
     }

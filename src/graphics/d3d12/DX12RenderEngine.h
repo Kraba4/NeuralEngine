@@ -1,14 +1,12 @@
 #pragma once
 #include "graphics/IRenderEngine.h"
-#include "GraphicsPipeline.h"
-#include "RootSignature.h"
-#include "DescriptorHeap.h"
+#include "classes/GraphicsPipeline.h"
+#include "classes/RootSignature.h"
+#include "classes/DescriptorHeap.h"
 //#include "Resource.h"
 #include <a_main/Camera.h>
-#include "SceneManager.h"
-#include <graphics/d3d12/resource_manager/ResourceManager.h>
-#include <graphics/d3d12/resource_manager/Texture.h>
-#include <graphics/d3d12/resource_manager/ConstantBuffer.h>
+#include "classes/SceneManager.h"
+#include "classes/Resources.h"
 
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>
