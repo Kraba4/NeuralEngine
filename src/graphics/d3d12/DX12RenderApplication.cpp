@@ -131,7 +131,7 @@ void DX12RenderEngine::render(const Timer& a_timer)
     const auto& meshFlat = m_sceneManager.getMeshInfo("flat");
     m_commandList->DrawIndexedInstanced(meshFlat.indexCount, 1, meshFlat.startIndex, meshFlat.startVertex, 0);
     
-    if (m_settings.showGUI) {
+    if (m_settings.showGUI && !m_settings.doScreenShot) {
         renderGUI();
     }
     endFrame();

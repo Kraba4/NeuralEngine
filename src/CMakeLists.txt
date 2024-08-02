@@ -4,6 +4,7 @@ include_directories(${CMAKE_SOURCE_DIR}/external/assimp)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/external/imgui)
 include_directories(${CMAKE_SOURCE_DIR}/external/imguizmo)
+include_directories(${CMAKE_SOURCE_DIR}/external)
 
 link_directories(${CMAKE_SOURCE_DIR}/external/glfw)
 
@@ -15,3 +16,4 @@ target_link_libraries(neural PRIVATE glfw3)
 target_link_libraries(neural PRIVATE d3d12)
 target_link_libraries(neural PRIVATE dxgi)
 target_link_libraries(neural PRIVATE assimp)
+target_link_libraries(neural PRIVATE DirectXTK12)

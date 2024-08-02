@@ -77,7 +77,7 @@ float Camera::getFovY() const
 float Camera::getFovX() const
 {
     float halfWidth = 0.5f * getNearWindowWidth();
-    return 2.0f * atan(halfWidth / m_nearZ);
+    return 2.0f * static_cast<float>(atan(halfWidth / m_nearZ));
 }
 
 float Camera::getNearWindowWidth() const
@@ -211,7 +211,7 @@ void Camera::updateViewMatrix()
         XMVECTOR U = XMLoadFloat3(&m_up);
         XMVECTOR L = XMLoadFloat3(&m_forward);
         XMVECTOR P = XMLoadFloat3(&m_position);
-        // Keep camera’s axes orthogonal to each other and of unit length.
+        // Keep cameraï¿½s axes orthogonal to each other and of unit length.
         L = XMVector3Normalize(L);
         U = XMVector3Normalize(XMVector3Cross(L, R));
         // U, L already ortho-normal, so no need to normalize cross product.

@@ -12,5 +12,6 @@ struct RenderSettings {
     Camera camera;
     std::string meshName = "cat";
     bool showGUI = true;
+    bool doScreenShot = false;
 };
 }

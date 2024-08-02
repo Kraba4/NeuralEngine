@@ -37,6 +37,9 @@ void GameEngine::processInputs(const AppInput& a_appInput, double dt)
 		m_pRenderSettings->rotateSpeedY = max(0, m_pRenderSettings->rotateSpeedY - rotateAcceleration * dt);
 	}
 
+	if (a_appInput.keyPressed[GLFW_KEY_F3]) {
+		m_pRenderSettings->doScreenShot = true;
+	}
 	if (a_appInput.mouse.capture) {
 		auto& camera = m_pRenderSettings->camera;
 		double mouseSensitivity = DirectX::XM_1DIV2PI / 100;

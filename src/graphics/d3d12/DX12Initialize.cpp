@@ -175,6 +175,24 @@ void DX12RenderEngine::endFrame()
 
     m_commandQueue->Signal(m_framesFence.Get(), m_currentFrame);
 
+    if (m_settings.doScreenShot) {
+        // wait until the gpu draw current buffer
+        const uint64_t currentFrameBufferFenceValue = m_currentFrame;
+        if (m_framesFence->GetCompletedValue() < currentFrameBufferFenceValue) {
+            DX_CALL(m_framesFence->SetEventOnCompletion(currentFrameBufferFenceValue, m_eventHandle));
+            WaitForSingleObject(m_eventHandle, INFINITE);
+        }
+
+
+        auto currentRT =  m_resourceManager.getTexture("mainRT", currentFrameBufferIndex).getID3D12Resource();
+        DirectX::SaveWICTextureToFile(
+            m_commandQueue.Get(), 
+            currentRT,
+            GUID_ContainerFormatPng, L"screenshot.png",
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+        
+        m_settings.doScreenShot = false;
+    }
     m_frameBufferFenceValue[currentFrameBufferIndex] = m_currentFrame;
     ++m_currentFrame;
     DX_CALL(m_swapChain->Present(0, 0));
@@ -194,7 +212,7 @@ void DX12RenderEngine::shutdown()
     //	//m_swapChainBuffers[i].Reset();
     //	m_swapChainBuffers[i] = nullptr;
     //}
-    m_mainDevice->RemoveDevice(); // костыль чтобы не выбрасывались исключения, пока не знаю как починить
+    m_mainDevice->RemoveDevice(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 }
 
 void DX12RenderEngine::flushFrameBuffers()

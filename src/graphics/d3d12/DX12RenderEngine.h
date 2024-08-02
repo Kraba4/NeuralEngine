@@ -15,6 +15,8 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_dx12.h>
 #include <ImGuizmo.h>
+#include <directx_tool_kit/Inc/ScreenGrab.h>
+#include <wincodec.h>
 
 #include <memory>
 

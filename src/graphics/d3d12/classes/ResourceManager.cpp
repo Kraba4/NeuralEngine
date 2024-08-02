@@ -35,7 +35,7 @@ ConstantBuffer& ResourceManager::createConstantBufferInFrame(std::string a_name,
     constantBuffer.m_size = a_createInfo.size;
     constantBuffer.m_elementSize = ConstantBuffer::CalcConstantBufferByteSize(a_createInfo.elementSize);
  
-    auto desc = CD3DX12_RESOURCE_DESC::Buffer(a_createInfo.size * a_createInfo.elementSize,
+    auto desc = CD3DX12_RESOURCE_DESC::Buffer(constantBuffer.m_size * constantBuffer.m_elementSize,
                                               a_createInfo.usageFlags);
     createResource(&constantBuffer.m_resource, {
         .resourceDesc = &desc,
@@ -49,7 +49,7 @@ ConstantBuffer& ResourceManager::createConstantBufferInFrame(std::string a_name,
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
     cbvDesc.BufferLocation = constantBuffer.m_resource->GetGPUVirtualAddress();
-    cbvDesc.SizeInBytes = constantBuffer.m_elementSize;
+    cbvDesc.SizeInBytes = constantBuffer.m_elementSize * constantBuffer.m_size;
 
     constantBuffer.m_viewHandle = m_cbvHeap.allocate();
     m_device->CreateConstantBufferView(&cbvDesc, constantBuffer.m_viewHandle.cpu);

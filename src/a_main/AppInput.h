@@ -16,8 +16,8 @@ struct AppInput
     struct {
         double posX;
         double posY;
-        int deltaX;
-        int deltaY;
+        double deltaX;
+        double deltaY;
         bool capture = false;
     } mouse;
 
