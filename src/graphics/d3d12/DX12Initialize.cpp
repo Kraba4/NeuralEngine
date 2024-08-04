@@ -49,6 +49,12 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
     m_settings.camera.setFrustum(DirectX::XMConvertToRadians(45), static_cast<float>(m_windowWidth) / m_windowHeight, 1, 1000);
     DirectX::XMStoreFloat4x4(&m_worldMatrix,DirectX::XMMatrixTranslation(0, 3, 10));
     m_selectedMatrix = &m_worldMatrix;
+
+    auto& api = Ort::GetApi();
+    auto env = std::unique_ptr<Ort::Env>(new Ort::Env());
+
+    Ort::SessionOptions opts;
+    opts.DisableMemPattern();
 }
 
 void DX12RenderEngine::createDXGIFactory()

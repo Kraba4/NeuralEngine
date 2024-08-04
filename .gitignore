@@ -13,3 +13,5 @@ _deps
 /bin
 /out
 screenshot.png
+/.vscode
+*.pdb
