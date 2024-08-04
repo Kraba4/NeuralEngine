@@ -108,9 +108,9 @@ void DX12RenderEngine::render(const Timer& a_timer)
     m_commandList->SetGraphicsRootSignature(m_rootSignature.getID3D12RootSignature());
     m_commandList->SetPipelineState(m_finalRenderPipeline.getID3D12Pipeline());
 
-    //ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.getID3D12DescriptorHeap()};
-    //m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-    //m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
+    ID3D12DescriptorHeap* descriptorHeaps[] = { m_resourceManager.getCBVHeap()->getID3D12DescriptorHeap()};
+    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+    // m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
 
     m_commandList->SetGraphicsRoot32BitConstant(0, 0, 0);
     m_commandList->SetGraphicsRootConstantBufferView(1,

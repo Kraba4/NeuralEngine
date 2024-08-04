@@ -3,10 +3,12 @@
 #include "classes/GraphicsPipeline.h"
 #include "classes/RootSignature.h"
 #include "classes/DescriptorHeap.h"
-//#include "Resource.h"
+
 #include <a_main/Camera.h>
 #include "classes/SceneManager.h"
-#include "classes/Resources.h"
+#include "classes/ResourceManager.h"
+#include "classes/resource/BufferAndTexture.h"
+#include "classes/resource/ConstantBuffer.h"
 
 #include "CommonGraphicsHeaders.h"
 #include <DirectXMath.h>

@@ -1,4 +1,6 @@
 #include "SceneManager.h"
+#include "ResourceManager.h"
+
 #include <iostream>
 #include <utils/Utils.h>
 

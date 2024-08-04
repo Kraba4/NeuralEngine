@@ -36,7 +36,8 @@ void VS(float3 iPos : POSITION,
 
 float4 PS(float4 oPos : SV_POSITION, Surface oSurface) : SV_Target
 {
-    float3 color = 1;
+    // float3 color = 1;
     float3 lightDir = normalize(LightPosition - oSurface.posW);
-    return float4(color * (max(dot(lightDir, normalize(oSurface.normalW)), 0)) + 0.2f, 1);
+    // return float4(color * (max(dot(lightDir, normalize(oSurface.normalW)), 0)) + 0.2f, 1);
+    return float4(lightDir, 1);
 }

@@ -2,7 +2,7 @@
 #include <DirectXMath.h>
 #include <utils/Macros.h>
 #include <graphics/d3d12/CommonGraphicsHeaders.h>
-#include "Resources.h"
+#include "ResourceManager.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
