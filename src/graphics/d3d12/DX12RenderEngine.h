@@ -19,7 +19,6 @@
 #include <ImGuizmo.h>
 #include <directx_tool_kit/Inc/ScreenGrab.h>
 #include <wincodec.h>
-#include <onnxruntime/include/onnxruntime_cxx_api.h>
 
 #include <memory>
 

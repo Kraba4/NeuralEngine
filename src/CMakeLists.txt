@@ -18,17 +18,8 @@ target_link_libraries(neural PRIVATE dxgi)
 target_link_libraries(neural PRIVATE assimp)
 target_link_libraries(neural PRIVATE DirectXTK12)
 
-add_library(onnxruntime_win SHARED IMPORTED)
-set_target_properties(onnxruntime_win PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/external/onnxruntime/lib/onnxruntime.dll"
-    IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/external/onnxruntime/lib/onnxruntime.lib"
-    IMPORTED_LOCATION_DEBUG "${CMAKE_SOURCE_DIR}/external/onnxruntime/lib/onnxruntime.dll"
-    IMPORTED_IMPLIB_DEBUG "${CMAKE_SOURCE_DIR}/external/onnxruntime/lib/onnxruntime.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external/onnxruntime/include"
-)
-add_custom_command(
-    TARGET neural POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:neural> $<TARGET_FILE_DIR:neural>
-    COMMAND_EXPAND_LISTS
-)
-target_link_libraries(neural PRIVATE onnxruntime_win)
+# add_custom_command(
+#     TARGET neural POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:neural> $<TARGET_FILE_DIR:neural>
+#     COMMAND_EXPAND_LISTS
+# )
