@@ -5,6 +5,47 @@
 #include <cmath>
 
 namespace neural::graphics {
+
+void DX12RenderEngine::initializeUniqueResources()
+{
+    // Load mesh
+    {
+        m_sceneManager.initialize(m_mainDevice.Get());
+        m_sceneManager.loadMeshFromFile("cat", RESOURCES"/models/Cat_Sitting.fbx",
+            { .rotation = {90, -90, 0}, .scale = 0.5 });
+        m_sceneManager.loadMeshFromFile("bird", RESOURCES"/models/Bird.obj",
+            { .rotation = {0, 0, 0}, .scale = 0.2 });
+        std::vector<SceneManager::Vertex> planeVertices = {
+            {{-1, 0, 1}, {0, 1, 0}, {0,0}},
+            {{1, 0, 1}, {0, 1, 0}, {0,0}},
+            {{-1, 0, -1}, {0, 1, 0}, {0,0}},
+            {{1, 0, -1}, {0, 1, 0}, {0,0}},
+        };
+        std::vector<uint32_t> planeIndices = {
+            0, 1, 2,  1, 3, 2
+        };
+        m_sceneManager.loadMesh("flat", planeVertices, planeIndices, { .scale = 100 });
+    }
+    
+    // // Initialize OnnxRuntime Session
+    // {
+    //     const OrtApi* ortApi = &Ort::GetApi();
+
+    //     Ort::SessionOptions opts; 
+    //     opts.DisableMemPattern();
+    //     OrtSessionOptionsAppendExecutionProviderEx_DML(opts, m_dmlDevice.Get(), m_commandQueue.Get());
+        
+    //     m_ortDimensions = {1, 6, m_windowHeight, m_windowWidth};
+    //     ortApi->AddFreeDimensionOverrideByName(opts, "image_input_N", m_ortDimensions[0]);
+    //     ortApi->AddFreeDimensionOverrideByName(opts, "image_input_C", m_ortDimensions[1]);
+    //     ortApi->AddFreeDimensionOverrideByName(opts, "image_input_H", m_ortDimensions[2]);
+    //     ortApi->AddFreeDimensionOverrideByName(opts, "image_input_W", m_ortDimensions[3]);
+
+    //     m_ortEnv = std::make_unique<Ort::Env>();
+    //     m_ortSession = std::make_unique<Ort::Session>(m_ortEnv, m_ortEnginePath, opts);
+    // }
+}
+
 void DX12RenderEngine::initializeFrameResources(uint32_t a_frameIndex)
 {
     ID3D12Resource* swapchainBuffer;
@@ -27,25 +68,17 @@ void DX12RenderEngine::initializeFrameResources(uint32_t a_frameIndex)
         .size = 1,
         .elementSize = sizeof(CBCameraParams)
     });
-}
 
-void DX12RenderEngine::initializeUniqueResources()
-{
-    m_sceneManager.initialize(m_mainDevice.Get());
-    m_sceneManager.loadMeshFromFile("cat", RESOURCES"/models/Cat_Sitting.fbx",
-        { .rotation = {90, -90, 0}, .scale = 0.5 });
-    m_sceneManager.loadMeshFromFile("bird", RESOURCES"/models/Bird.obj",
-        { .rotation = {0, 0, 0}, .scale = 0.2 });
-    std::vector<SceneManager::Vertex> planeVertices = {
-        {{-1, 0, 1}, {0, 1, 0}, {0,0}},
-        {{1, 0, 1}, {0, 1, 0}, {0,0}},
-        {{-1, 0, -1}, {0, 1, 0}, {0,0}},
-        {{1, 0, -1}, {0, 1, 0}, {0,0}},
-    };
-    std::vector<uint32_t> planeIndices = {
-        0, 1, 2,  1, 3, 2
-    };
-    m_sceneManager.loadMesh("flat", planeVertices, planeIndices, { .scale = 100 });
+    // OrtBuffer& ortInput = m_resourceManager.createOrtBufferInFrame("ortInputBuffer", a_frameIndex, {
+    //     .dataType = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16,
+    //     .dimensions = m_ortDimensions
+    // });
+    // OrtBuffer& ortOutput = m_resourceManager.createOrtBufferInFrame("ortOutputBuffer", a_frameIndex, {
+    //     .dataType = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16,
+    //     .dimensions = m_ortDimensions
+    // });
+    // m_resourceManager.createOrtBindingInFrame("ortBinding", a_frameIndex, m_ortSession.get(), ortInput, ortOutput);
+
 }
 
 void DX12RenderEngine::initializePipelines()
@@ -77,6 +110,15 @@ void DX12RenderEngine::initializePipelines()
             .DSVFormat = DXGI_FORMAT_D32_FLOAT
         });
     NAME_DX_OBJECT(m_finalRenderPipeline.getID3D12Pipeline(), L"RenderPipeline");
+
+
+    // m_ortRootSignature.initialize(m_mainDevice.Get(), 
+    // {
+    //      {  
+    //         .parameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+    //         .constants = {.baseShaderRegister = 0, .num32BitValues = 1}
+    //      }
+    // });
 }
 
 void DX12RenderEngine::initialCommands()

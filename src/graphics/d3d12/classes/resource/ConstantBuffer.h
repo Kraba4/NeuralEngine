@@ -24,8 +24,8 @@ public:
     //    assert(a_elementIndex * m_elementSize < m_size * m_elementSize);
     //    memcpy(&m_mappedData[a_elementIndex * m_elementSize], &a_data, m_elementSize);
     //}
-    void initialize(ID3D12Device* a_device, const ConstantBufferCreateInfo& a_createInfo,
-                    DescriptorHeap* a_cbvHeap);
+    void initialize(ID3D12Device* a_device, DescriptorHeap* a_cbvHeap,
+                    const ConstantBufferCreateInfo& a_createInfo);
     void uploadData(void* a_data) {
         Buffer::uploadData(a_data);
     }

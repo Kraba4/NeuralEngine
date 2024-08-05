@@ -1,9 +1,10 @@
 #pragma once
 #include "graphics/IRenderEngine.h"
 #include "classes/GraphicsPipeline.h"
+#include "classes/ComputePipeline.h"
 #include "classes/RootSignature.h"
 #include "classes/DescriptorHeap.h"
-
+#include "classes/resource/OrtBuffer.h"
 #include <a_main/Camera.h>
 #include "classes/SceneManager.h"
 #include "classes/ResourceManager.h"
@@ -20,6 +21,8 @@
 #include <directx_tool_kit/Inc/ScreenGrab.h>
 #include <wincodec.h>
 #include <onnxruntime/include/onnxruntime_cxx_api.h>
+#include <onnxruntime/include/dml_provider_factory.h>
+#include <DirectML.h>
 
 #include <memory>
 
@@ -41,6 +44,7 @@ private:
     void createCommandListAndSendInitialCommands();
     void createFence();
     void initializeDX12ImGui();
+    void createDMLDevice();
     void flushFrameBuffers();
     void beginFrame();
     void endFrame();
@@ -64,7 +68,6 @@ private:
     ComPtr<ID3D12GraphicsCommandList>  m_commandList;
     ComPtr<ID3D12CommandQueue> m_commandQueue;
     ComPtr<IDXGISwapChain> m_swapChain;
-
     //DescriptorHeap m_rtvHeap;
     //DescriptorHeap m_dsvHeap;
     //DescriptorHeap m_cbvHeap;
@@ -97,5 +100,16 @@ private:
     DirectX::XMFLOAT4X4* m_selectedMatrix;
 
     DirectX::XMFLOAT4X4 m_worldMatrix;
+
+    ComPtr<IDMLDevice>              m_dmlDevice{ nullptr };
+    std::unique_ptr<Ort::Env>       m_ortEnv;
+    const wchar_t*                  m_ortEnginePath = L"";
+    std::unique_ptr<Ort::Session>   m_ortSession;
+    std::unique_ptr<Ort::IoBinding> m_ortBinding;
+    OrtBuffer                       m_ortInputBuffer;
+    OrtBuffer                       m_ortOutputBuffer;
+    RootSignature                   m_ortRootSignature;
+    ComputePipeline                 m_ortPipeline;
+    std::vector<int64_t>            m_ortDimensions;
 };
 }

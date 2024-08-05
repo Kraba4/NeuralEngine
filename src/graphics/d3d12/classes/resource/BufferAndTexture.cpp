@@ -29,7 +29,7 @@ void createResource(ID3D12Device* a_device, ID3D12Resource** a_resource, const R
 
 #pragma region Buffer
 ///////////////////////////////          BUFFER          //////////////////////////////////////
-void Buffer::initialize(ID3D12Device* a_device, const BufferCreateInfo& a_createInfo, DescriptorHeap* a_srvUavHeap)
+void Buffer::initialize(ID3D12Device* a_device, DescriptorHeap* a_srvUavHeap, const BufferCreateInfo& a_createInfo)
 {
     assert(a_device);
     assert(a_srvUavHeap);
@@ -95,8 +95,9 @@ D3D12_INDEX_BUFFER_VIEW Buffer::getIndexBufferView() const {
 
 #pragma region Texture
 ///////////////////////////////          TEXTURE          //////////////////////////////////////
-void Texture::initialize(ID3D12Device* a_device, const TextureCreateInfo& a_createInfo,
-    DescriptorHeap* a_rtvHeap, DescriptorHeap* a_dsvHeap, DescriptorHeap* a_srvUavHeap)
+void Texture::initialize(ID3D12Device* a_device, 
+                         DescriptorHeap* a_rtvHeap, DescriptorHeap* a_dsvHeap, DescriptorHeap* a_srvUavHeap, 
+                         const TextureCreateInfo& a_createInfo)
 {
     assert(a_device);
     assert(a_srvUavHeap || a_rtvHeap || a_dsvHeap);

@@ -1,11 +1,11 @@
 #include "ConstantBuffer.h"
 
 namespace neural::graphics {
-void ConstantBuffer::initialize(ID3D12Device* a_device, const ConstantBufferCreateInfo& a_createInfo,
-DescriptorHeap* a_cbvHeap) {
+void ConstantBuffer::initialize(ID3D12Device* a_device, DescriptorHeap* a_cbvHeap,
+                                const ConstantBufferCreateInfo& a_createInfo) {
     assert(a_device);
     assert(a_cbvHeap);
-    Buffer::initialize(a_device, {
+    Buffer::initialize(a_device, a_cbvHeap, {
         .size = a_createInfo.size,
         .elementSize = CalcConstantBufferByteSize(a_createInfo.elementSize),
         .aligment = a_createInfo.aligment,
@@ -13,7 +13,7 @@ DescriptorHeap* a_cbvHeap) {
         .initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
         .heapType = D3D12_HEAP_TYPE_UPLOAD,
         .heapInfo = a_createInfo.heapInfo
-    }, a_cbvHeap);
+    });
     mapData();
 }
 

@@ -26,7 +26,7 @@ ConstantBuffer& ResourceManager::createConstantBufferInFrame(std::string a_name,
 
     m_frameResources[a_frame].m_constantBuffers[a_name] = {};
     ConstantBuffer& constantBuffer = m_frameResources[a_frame].m_constantBuffers[a_name];
-    constantBuffer.initialize(m_device, a_createInfo, &m_cbvHeap);
+    constantBuffer.initialize(m_device, &m_cbvHeap, a_createInfo);
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT_INDEXED(constantBuffer.m_resource, wName, a_frame);
@@ -38,7 +38,7 @@ Buffer& ResourceManager::createBufferInUnique(std::string a_name, const BufferCr
 
     m_uniqueResources.m_buffers[a_name] = {};
     Buffer& buffer = m_uniqueResources.m_buffers[a_name];
-    buffer.initialize(m_device, a_createInfo, &m_cbvHeap);
+    buffer.initialize(m_device, &m_cbvHeap, a_createInfo);
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT(buffer.m_resource, wName);
@@ -51,7 +51,7 @@ Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_fr
 
     m_frameResources[a_frame].m_textures[a_name] = {};
     Texture& texture = m_frameResources[a_frame].m_textures[a_name];
-    texture.initialize(m_device, a_createInfo, &m_rtvHeap, &m_dsvHeap, &m_cbvHeap);
+    texture.initialize(m_device, &m_rtvHeap, &m_dsvHeap, &m_cbvHeap, a_createInfo);
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT_INDEXED(texture.m_resource, wName, a_frame);
@@ -84,4 +84,36 @@ Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_fr
     return texture;
 }
 
+OrtBuffer& ResourceManager::createOrtBufferInFrame(std::string a_name, uint32_t a_frame, 
+                                        const OrtBufferCreateInfo& a_createInfo)
+{
+    assert(m_device);
+    assert(!m_frameResources[a_frame].m_ortBuffers.contains(a_name)); // name is already taken
+
+    m_frameResources[a_frame].m_ortBuffers[a_name] = {};
+    OrtBuffer& ortBuffer = m_frameResources[a_frame].m_ortBuffers[a_name];
+    ortBuffer.initialize(m_device, &m_cbvHeap, a_createInfo);
+
+    std::wstring wName(a_name.begin(), a_name.end());
+    NAME_DX_OBJECT_INDEXED(ortBuffer.getID3D12Resource(), wName, a_frame);
+
+    return ortBuffer;
+}
+
+Ort::IoBinding& ResourceManager::createOrtBindingInFrame(std::string a_name, uint32_t a_frame,
+                                         Ort::Session* a_session,
+                                         const OrtBuffer& a_input, const OrtBuffer& a_output)
+{
+    assert(a_session);
+    assert(!m_frameResources[a_frame].m_ortBindings.contains(a_name)); // name is already taken
+
+    m_frameResources[a_frame].m_ortBindings.emplace(a_name, a_session);
+    Ort::IoBinding& onnxBinding = m_frameResources[a_frame].m_ortBindings[a_name];
+    OrtValue *ortInputValue = a_input.getOrtValue();
+    OrtValue *ortOutputValue = a_output.getOrtValue();
+    onnxBinding.BindInput("input", (Ort::Value &)ortInputValue);
+    onnxBinding.BindOutput("output", (Ort::Value &)ortOutputValue);
+
+    return onnxBinding;
+}
 }

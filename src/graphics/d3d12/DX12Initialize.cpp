@@ -19,11 +19,12 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
     recreateSwapChain();
     createCommandAllocators();
     createFence();
+    createDMLDevice();
     m_resourceManager.initialize(m_mainDevice.Get(), k_nSwapChainBuffers, 64, 64, 64);
+    initializeUniqueResources();
     for (uint32_t frameIndex = 0; frameIndex < k_nSwapChainBuffers; ++frameIndex) {
         initializeFrameResources(frameIndex);
     }
-    initializeUniqueResources();
     initializePipelines();
     createCommandListAndSendInitialCommands();
     initializeDX12ImGui();
@@ -50,11 +51,11 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
     DirectX::XMStoreFloat4x4(&m_worldMatrix,DirectX::XMMatrixTranslation(0, 3, 10));
     m_selectedMatrix = &m_worldMatrix;
 
-    auto& api = Ort::GetApi();
-    auto env = std::unique_ptr<Ort::Env>(new Ort::Env());
-
-    Ort::SessionOptions opts;
-    opts.DisableMemPattern();
+    OrtBuffer onnxBuffer;
+    onnxBuffer.initialize(m_mainDevice.Get(), m_resourceManager.getCBVHeap(), {
+        .dataType = ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16,
+        .dimensions = {1, 2, 3}
+    });
 }
 
 void DX12RenderEngine::createDXGIFactory()
@@ -181,6 +182,11 @@ void DX12RenderEngine::endFrame()
 
     m_commandQueue->Signal(m_framesFence.Get(), m_currentFrame);
 
+    const uint64_t currentFrameBufferFenceValue = m_currentFrame;
+        if (m_framesFence->GetCompletedValue() < currentFrameBufferFenceValue) {
+            DX_CALL(m_framesFence->SetEventOnCompletion(currentFrameBufferFenceValue, m_eventHandle));
+            WaitForSingleObject(m_eventHandle, INFINITE);
+        }
     if (m_settings.doScreenShot) {
         // wait until the gpu draw current buffer
         const uint64_t currentFrameBufferFenceValue = m_currentFrame;
@@ -231,5 +237,11 @@ void DX12RenderEngine::flushFrameBuffers()
             WaitForSingleObject(m_eventHandle, INFINITE);
         }
     }
+}
+
+void DX12RenderEngine::createDMLDevice() {
+    DML_CREATE_DEVICE_FLAGS dmlDeviceFlags = DML_CREATE_DEVICE_FLAG_NONE;
+    DEBUG_LINE(dmlDeviceFlags |= DML_CREATE_DEVICE_FLAG_DEBUG);
+    DX_CALL(DMLCreateDevice(m_mainDevice.Get(), dmlDeviceFlags, IID_PPV_ARGS(&m_dmlDevice)));
 }
 }

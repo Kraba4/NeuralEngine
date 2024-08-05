@@ -55,3 +55,23 @@ object->SetName(t.c_str()); \
 #else
 #define NAME_DX_OBJECT_INDEXED(object, name, index) 
 #endif
+
+#ifdef _DEBUG
+#define ORT_CALL(line) {		               \
+auto status = line;             \
+if (status != nullptr) {			   \
+OutputDebugStringA("-------OnnxRuntime error in "); \
+OutputDebugStringA( __FILE__);	           \
+OutputDebugStringA("\n-------Line: ");	   \
+char line_number[32];					   \
+sprintf_s(line_number, "%u", __LINE__);    \
+OutputDebugStringA(line_number);	       \
+OutputDebugStringA("\n-------");	       \
+OutputDebugStringA(#line);	               \
+OutputDebugStringA("\n-------");	       \
+__debugbreak();                            \
+}                                          \
+}                                          
+#else
+#define ORT_CALL(line) line
+#endif
