@@ -62,6 +62,16 @@ void DX12RenderEngine::createDevice()
     NAME_DX_OBJECT(m_mainDevice, L"MainDevice");
 }
 
+void DX12RenderEngine::initializeDirectML()
+{
+#if _DEBUG
+    DX_CALL(DMLCreateDevice(m_mainDevice.Get(), DML_CREATE_DEVICE_FLAG_DEBUG, IID_PPV_ARGS(&m_dmlDevice)));
+#else
+    DX_CALL(DMLCreateDevice(m_mainDevice.Get(), DML_CREATE_DEVICE_FLAG_NONE, IID_PPV_ARGS(&m_dmlDevice)));
+#endif
+
+    DX_CALL(m_dmlDevice->CreateCommandRecorder(IID_PPV_ARGS(&m_dmlCommandRecorder)));
+}
 void DX12RenderEngine::recreateSwapChain()
 {
     m_swapChain.Reset();

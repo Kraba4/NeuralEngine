@@ -4,14 +4,13 @@
 #include "classes/ComputePipeline.h"
 #include "classes/RootSignature.h"
 #include "classes/DescriptorHeap.h"
-
 #include <a_main/Camera.h>
 #include "classes/SceneManager.h"
 #include "classes/ResourceManager.h"
 #include "classes/resource/BufferAndTexture.h"
 #include "classes/resource/ConstantBuffer.h"
-
 #include "CommonGraphicsHeaders.h"
+
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 #include <imgui.h>
@@ -20,6 +19,7 @@
 #include <ImGuizmo.h>
 #include <directx_tool_kit/Inc/ScreenGrab.h>
 #include <wincodec.h>
+#include <DirectML.h>
 
 #include <memory>
 
@@ -34,6 +34,7 @@ public:
 private:
     void createDXGIFactory();
     void createDevice();
+    void initializeDirectML();
     void recreateSwapChain();
     void createCommandQueue();
     void createCommandAllocators();
@@ -65,18 +66,11 @@ private:
     ComPtr<ID3D12CommandQueue> m_commandQueue;
     ComPtr<IDXGISwapChain> m_swapChain;
 
-    //DescriptorHeap m_rtvHeap;
-    //DescriptorHeap m_dsvHeap;
-    //DescriptorHeap m_cbvHeap;
-
-    //DefaultResource m_screenTextures[k_nSwapChainBuffers];
-    //DefaultResource m_depthTextures[k_nSwapChainBuffers];
     struct CBCameraParams {
         DirectX::XMFLOAT4X4 WorldMatrix;
         DirectX::XMFLOAT4X4 ViewProjMatrix;
         DirectX::XMFLOAT3 LightPosition;
     } m_cbCameraParams;
-    //ConstantBuffer<CBCameraParams> m_constantBuffer[k_nSwapChainBuffers];
 
     GraphicsPipeline m_finalRenderPipeline;
     RootSignature m_rootSignature;
@@ -97,5 +91,8 @@ private:
     DirectX::XMFLOAT4X4* m_selectedMatrix;
 
     DirectX::XMFLOAT4X4 m_worldMatrix;
+
+    ComPtr<IDMLDevice> m_dmlDevice;
+    ComPtr<IDMLCommandRecorder> m_dmlCommandRecorder;
 };
 }

@@ -8,7 +8,32 @@ include_directories(${CMAKE_SOURCE_DIR}/external)
 
 link_directories(${CMAKE_SOURCE_DIR}/external/glfw)
 
-add_executable(neural ${IMGUI_SRC} ${IMGUIZMO_SRC} "a_main/main.cpp" "graphics/d3d12/classes/ComputePipeline.h" "graphics/d3d12/classes/ComputePipeline.cpp" "graphics/d3d12/DX12Initialize.cpp" "graphics/IRenderEngine.h" "graphics/d3d12/DX12RenderEngine.h" "graphics/d3d12/DX12RenderApplication.cpp" "a_main/Application.h" "a_main/Application.cpp" "game/Game.h" "game/ProcessInputs.cpp" "a_main/Timer.h" "a_main/Timer.cpp" "utils/Macros.h" "graphics/d3d12/classes/GraphicsPipeline.h"  "utils/Utils.h" "utils/Utils.cpp" "graphics/d3d12/classes/RootSignature.h"  "graphics/d3d12/classes/RootSignature.cpp" "graphics/d3d12/classes/GraphicsPipeline.cpp" "graphics/d3d12/CommonGraphicsHeaders.h" "graphics/d3d12/classes/DescriptorHeap.cpp" "a_main/Camera.h" "a_main/Camera.cpp" "a_main/AppCallbacks.cpp" "a_main/AppInput.h" "graphics/RenderSettings.h" "graphics/d3d12/classes/SceneManager.h" "graphics/d3d12/classes/SceneManager.cpp" "graphics/d3d12/DX12Gui.cpp"  "graphics/d3d12/classes/ResourceManager.h" "graphics/d3d12/classes/ResourceManager.cpp" "graphics/d3d12/classes/resource/BufferAndTexture.h" "graphics/d3d12/classes/resource/BufferAndTexture.cpp" "graphics/d3d12/classes/resource/ConstantBuffer.h" "graphics/d3d12/classes/resource/ConstantBuffer.cpp" "graphics/d3d12/classes/resource/OnnxBuffer.h")
+set(NEURAL_SRC
+        ${CMAKE_SOURCE_DIR}/src/a_main/main.cpp
+        ${CMAKE_SOURCE_DIR}/src/a_main/Application.cpp
+        ${CMAKE_SOURCE_DIR}/src/a_main/Timer.cpp
+        ${CMAKE_SOURCE_DIR}/src/a_main/Camera.cpp
+        ${CMAKE_SOURCE_DIR}/src/a_main/AppCallbacks.cpp
+
+        ${CMAKE_SOURCE_DIR}/src/game/ProcessInputs.cpp
+
+        ${CMAKE_SOURCE_DIR}/src/utils/Utils.cpp
+
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12Initialize.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12RenderApplication.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12Gui.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ComputePipeline.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/RootSignature.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/GraphicsPipeline.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/DescriptorHeap.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/SceneManager.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ResourceManager.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/BufferAndTexture.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/ConstantBuffer.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/Layer.cpp
+        )
+
+add_executable(neural ${IMGUI_SRC} ${IMGUIZMO_SRC}  ${NEURAL_SRC})
 
 set_target_properties(neural PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
@@ -17,7 +42,7 @@ target_link_libraries(neural PRIVATE d3d12)
 target_link_libraries(neural PRIVATE dxgi)
 target_link_libraries(neural PRIVATE assimp)
 target_link_libraries(neural PRIVATE DirectXTK12)
-
+target_link_libraries(neural PRIVATE DirectML)
 # add_custom_command(
 #     TARGET neural POST_BUILD
 #     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:neural> $<TARGET_FILE_DIR:neural>
