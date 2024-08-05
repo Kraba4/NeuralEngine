@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/IRenderEngine.h"
 #include "classes/GraphicsPipeline.h"
+#include "classes/ComputePipeline.h"
 #include "classes/RootSignature.h"
 #include "classes/DescriptorHeap.h"
 
