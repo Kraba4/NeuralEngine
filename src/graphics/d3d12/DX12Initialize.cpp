@@ -1,5 +1,6 @@
 #include "DX12RenderEngine.h"
 #include <utils/Macros.h>
+#include <iostream>
 
 namespace neural::graphics {
 void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
@@ -19,13 +20,19 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
     recreateSwapChain();
     createCommandAllocators();
     createFence();
+    initializeDirectML();
     m_resourceManager.initialize(m_mainDevice.Get(), k_nSwapChainBuffers, 64, 64, 64);
     for (uint32_t frameIndex = 0; frameIndex < k_nSwapChainBuffers; ++frameIndex) {
         initializeFrameResources(frameIndex);
     }
     initializeUniqueResources();
     initializePipelines();
+    m_eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+    for (int i = 0; i < k_nSwapChainBuffers; ++i) {
+        m_frameBufferFenceValue[i] = 1;
+    }
     createCommandListAndSendInitialCommands();
+    afterInitialCommands();
     initializeDX12ImGui();
 
     m_screenViewport = { .TopLeftX = 0,
@@ -40,11 +47,6 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
                         .right = static_cast<int32_t>(m_windowWidth),
                         .bottom = static_cast<int32_t>(m_windowHeight)
     };
-
-    m_eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-    for (int i = 0; i < k_nSwapChainBuffers; ++i) {
-        m_frameBufferFenceValue[i] = 1;
-    }
 
     m_settings.camera.setFrustum(DirectX::XMConvertToRadians(45), static_cast<float>(m_windowWidth) / m_windowHeight, 1, 1000);
     DirectX::XMStoreFloat4x4(&m_worldMatrix,DirectX::XMMatrixTranslation(0, 3, 10));
@@ -69,7 +71,14 @@ void DX12RenderEngine::initializeDirectML()
 #else
     DX_CALL(DMLCreateDevice(m_mainDevice.Get(), DML_CREATE_DEVICE_FLAG_NONE, IID_PPV_ARGS(&m_dmlDevice)));
 #endif
+    DML_FEATURE_QUERY_TENSOR_DATA_TYPE_SUPPORT fp16Query = { DML_TENSOR_DATA_TYPE_FLOAT16 };
+    DML_FEATURE_DATA_TENSOR_DATA_TYPE_SUPPORT fp16Supported = {};
+    DX_CALL(m_dmlDevice->CheckFeatureSupport(DML_FEATURE_TENSOR_DATA_TYPE_SUPPORT, sizeof(fp16Query), &fp16Query, sizeof(fp16Supported), &fp16Supported));
 
+    if (!fp16Supported.IsSupported)
+    {
+       std::cout << "\nFloat16 not supported\n";
+    }
     DX_CALL(m_dmlDevice->CreateCommandRecorder(IID_PPV_ARGS(&m_dmlCommandRecorder)));
 }
 void DX12RenderEngine::recreateSwapChain()
@@ -131,6 +140,13 @@ void DX12RenderEngine::createCommandListAndSendInitialCommands()
     ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(1, cmdLists);
     m_commandQueue->Signal(m_framesFence.Get(), 1);
+
+    // wait until the gpu draw current buffer
+    const uint64_t currentFrameBufferFenceValue = 1;
+    if (m_framesFence->GetCompletedValue() < currentFrameBufferFenceValue) {
+        DX_CALL(m_framesFence->SetEventOnCompletion(currentFrameBufferFenceValue, m_eventHandle));
+        WaitForSingleObject(m_eventHandle, INFINITE);
+    }
 }
 
 void DX12RenderEngine::createFence()

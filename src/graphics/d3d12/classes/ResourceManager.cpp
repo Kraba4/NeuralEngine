@@ -18,6 +18,7 @@ void ResourceManager::initialize(ID3D12Device* a_device, uint32_t a_nFrames,
     m_device = a_device;
 
     m_frameResources = std::move(std::make_unique<Resources[]>(a_nFrames));
+    NAME_DX_OBJECT(m_cbvHeap.getID3D12DescriptorHeap(), L"mainSrvHeap");
 }
 
 ConstantBuffer& ResourceManager::createConstantBufferInFrame(std::string a_name, uint32_t a_frame, const ConstantBufferCreateInfo& a_createInfo)
@@ -38,7 +39,7 @@ Buffer& ResourceManager::createBufferInUnique(std::string a_name, const BufferCr
 
     m_uniqueResources.m_buffers[a_name] = {};
     Buffer& buffer = m_uniqueResources.m_buffers[a_name];
-    buffer.initialize(m_device, a_createInfo, &m_cbvHeap);
+    buffer.initialize(m_device, &m_cbvHeap, a_createInfo);
 
     std::wstring wName(a_name.begin(), a_name.end());
     NAME_DX_OBJECT(buffer.m_resource, wName);

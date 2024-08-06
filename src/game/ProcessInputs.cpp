@@ -40,6 +40,11 @@ void GameEngine::processInputs(const AppInput& a_appInput, double dt)
 	if (a_appInput.keyPressed[GLFW_KEY_F3]) {
 		m_pRenderSettings->doScreenShot = true;
 	}
+
+	if (a_appInput.keyPressed[GLFW_KEY_F4]) {
+		m_pRenderSettings->ml = !m_pRenderSettings->ml;
+	}
+
 	if (a_appInput.mouse.capture) {
 		auto& camera = m_pRenderSettings->camera;
 		double mouseSensitivity = DirectX::XM_1DIV2PI / 100;

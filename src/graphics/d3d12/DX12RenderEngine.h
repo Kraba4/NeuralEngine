@@ -10,6 +10,7 @@
 #include "classes/resource/BufferAndTexture.h"
 #include "classes/resource/ConstantBuffer.h"
 #include "CommonGraphicsHeaders.h"
+#include "classes/ml/Model.h"
 
 #include <DirectXMath.h>
 #include <DirectXColors.h>
@@ -39,6 +40,7 @@ private:
     void createCommandQueue();
     void createCommandAllocators();
     void initialCommands();
+    void afterInitialCommands();
     void createCommandListAndSendInitialCommands();
     void createFence();
     void initializeDX12ImGui();
@@ -94,5 +96,6 @@ private:
 
     ComPtr<IDMLDevice> m_dmlDevice;
     ComPtr<IDMLCommandRecorder> m_dmlCommandRecorder;
+    Model m_dmlModel;
 };
 }

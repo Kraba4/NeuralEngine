@@ -6,8 +6,8 @@
 
 #include "Application.h"
 
-constexpr int32_t WIDTH = 980;
-constexpr int32_t HEIGHT = 620;
+constexpr int32_t WIDTH = 800;
+constexpr int32_t HEIGHT = 600;
 
 int main() {
     neural::Application app;

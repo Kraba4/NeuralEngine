@@ -62,7 +62,10 @@ public:
     //    memcpy(&m_mappedData[a_elementIndex * m_elementSize], &a_data, m_elementSize);
     //}
 
-    void initialize(ID3D12Device* a_device, const BufferCreateInfo& a_createInfo, DescriptorHeap* a_srvUavHeap);
+    void initialize(ID3D12Device* a_device, DescriptorHeap* a_srvUavHeap, const BufferCreateInfo& a_createInfo);
+    void setSrvUavHeap(DescriptorHeap* a_srvUavHeap) {
+        m_srvUavHeap = a_srvUavHeap;
+    }
     void mapData() {
         m_resource->Map(0, nullptr, &m_mappedData);
     }

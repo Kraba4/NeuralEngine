@@ -13,5 +13,6 @@ struct RenderSettings {
     std::string meshName = "cat";
     bool showGUI = true;
     bool doScreenShot = false;
+    bool ml = true;
 };
 }

@@ -29,17 +29,17 @@ void createResource(ID3D12Device* a_device, ID3D12Resource** a_resource, const R
 
 #pragma region Buffer
 ///////////////////////////////          BUFFER          //////////////////////////////////////
-void Buffer::initialize(ID3D12Device* a_device, const BufferCreateInfo& a_createInfo, DescriptorHeap* a_srvUavHeap)
+void Buffer::initialize(ID3D12Device* a_device, DescriptorHeap* a_srvUavHeap, const BufferCreateInfo& a_createInfo)
 {
     assert(a_device);
-    assert(a_srvUavHeap);
     assert(a_createInfo.size > 0);
     assert(a_createInfo.elementSize > 0);
 
     m_device = a_device;
     m_size = a_createInfo.size;
     m_elementSize = a_createInfo.elementSize;
-
+    m_srvUavHeap = a_srvUavHeap;
+    
     auto desc = CD3DX12_RESOURCE_DESC::Buffer(a_createInfo.size * a_createInfo.elementSize,
         a_createInfo.usageFlags);
     createResource(a_device, &m_resource, {

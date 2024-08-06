@@ -46,6 +46,9 @@ void DX12RenderEngine::initializeUniqueResources()
         0, 1, 2,  1, 3, 2
     };
     m_sceneManager.loadMesh("flat", planeVertices, planeIndices, { .scale = 100 });
+    m_dmlModel.initialize(m_mainDevice.Get(), m_dmlDevice.Get(), m_resourceManager.getCBVHeap(),
+                          m_windowWidth, m_windowHeight);
+    m_dmlModel.setInitializationBindings();
 }
 
 void DX12RenderEngine::initializePipelines()
@@ -82,8 +85,13 @@ void DX12RenderEngine::initializePipelines()
 void DX12RenderEngine::initialCommands()
 {
     m_sceneManager.uploadMeshesOnGPU(m_commandList.Get(), &m_resourceManager);
+    m_dmlModel.dispatchInitialization(m_dmlCommandRecorder.Get(), m_commandList.Get());
 }
 
+void DX12RenderEngine::afterInitialCommands()
+{
+    m_dmlModel.setExecutionBindings();
+}
 
 void DX12RenderEngine::render(const Timer& a_timer)
 {
@@ -98,6 +106,9 @@ void DX12RenderEngine::render(const Timer& a_timer)
         DirectX::XMMatrixMultiplyTranspose(m_settings.camera.getView(), m_settings.camera.getProj()));
     m_resourceManager.getConstantBuffer("cb", frameIndex).uploadData(&m_cbCameraParams);
 
+    ID3D12DescriptorHeap* descriptorHeaps[] = { m_resourceManager.getCBVHeap()->getID3D12DescriptorHeap()};
+    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
     auto currentBufferView = m_resourceManager.getTexture("mainRT", frameIndex).getRTV();
     auto currentDepthBufferView = m_resourceManager.getTexture("mainDepth", frameIndex).getDSV();
     float color[] = { 0, 0, 0, 1 };
@@ -108,8 +119,6 @@ void DX12RenderEngine::render(const Timer& a_timer)
     m_commandList->SetGraphicsRootSignature(m_rootSignature.getID3D12RootSignature());
     m_commandList->SetPipelineState(m_finalRenderPipeline.getID3D12Pipeline());
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { m_resourceManager.getCBVHeap()->getID3D12DescriptorHeap()};
-    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
     // m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
 
     m_commandList->SetGraphicsRoot32BitConstant(0, 0, 0);
@@ -133,6 +142,11 @@ void DX12RenderEngine::render(const Timer& a_timer)
     
     if (m_settings.showGUI && !m_settings.doScreenShot) {
         renderGUI();
+    }
+    if (m_settings.ml) {
+        ID3D12DescriptorHeap* descriptorHeapsDml[] = { m_dmlModel.getID3D12DescriptorHeap() };
+        m_commandList->SetDescriptorHeaps(_countof(descriptorHeapsDml), descriptorHeapsDml);
+        m_dmlModel.dispatch(m_dmlCommandRecorder.Get(), m_commandList.Get());
     }
     endFrame();
 }

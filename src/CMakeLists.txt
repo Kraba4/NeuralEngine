@@ -30,7 +30,9 @@ set(NEURAL_SRC
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ResourceManager.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/BufferAndTexture.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/ConstantBuffer.cpp
-        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/Layer.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/ConvolutionLayer.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/ConvolutionLayersContainer.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/Model.cpp
         )
 
 add_executable(neural ${IMGUI_SRC} ${IMGUIZMO_SRC}  ${NEURAL_SRC})
