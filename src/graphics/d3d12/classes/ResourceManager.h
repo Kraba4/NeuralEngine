@@ -23,6 +23,7 @@ public:
     Texture& createTextureInFrame(std::string a_name, uint32_t a_frame, const TextureCreateInfo& a_createInfo);
     Texture& createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource);
     Texture& getTexture(std::string a_name, uint32_t a_frame) {
+        assert(m_frameResources[a_frame].m_textures.contains(a_name));
         return m_frameResources[a_frame].m_textures[a_name];
     }
     ID3D12Device* getDevice() {

@@ -23,10 +23,50 @@ void DX12RenderEngine::initializeFrameResources(uint32_t a_frameIndex)
             .initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE,
     });
 
+    m_resourceManager.createTextureInFrame("colorMap", a_frameIndex, {
+            .format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+            .width = m_windowWidth,
+            .height = m_windowHeight,
+            .clearValue = D3D12_CLEAR_VALUE {
+                .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+                .Color = {0, 0, 0, 1}
+            },
+            .usageFlags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            .initialState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+    });
+
+    m_resourceManager.createTextureInFrame("normalMap", a_frameIndex, {
+            .format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+            .width = m_windowWidth,
+            .height = m_windowHeight,
+            .clearValue = D3D12_CLEAR_VALUE {
+                .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+                .Color = {0, 0, 0, 1}
+            },
+            .usageFlags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            .initialState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+    });
+    
+    m_resourceManager.createTextureInFrame("toCameraMap", a_frameIndex, {
+            .format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+            .width = m_windowWidth,
+            .height = m_windowHeight,
+            .clearValue = D3D12_CLEAR_VALUE {
+                .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+                .Color = {0, 0, 0, 1}
+            },
+            .usageFlags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            .initialState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+    });
+
     m_resourceManager.createConstantBufferInFrame("cb", a_frameIndex, {
         .size = 1,
         .elementSize = sizeof(CBCameraParams)
     });
+
+    m_dmlModel[a_frameIndex].initialize(m_mainDevice.Get(), m_dmlDevice.Get(), m_resourceManager.getCBVHeap(),
+                          m_windowWidth, m_windowHeight);
+    m_dmlModel[a_frameIndex].setInitializationBindings();
 }
 
 void DX12RenderEngine::initializeUniqueResources()
@@ -46,9 +86,6 @@ void DX12RenderEngine::initializeUniqueResources()
         0, 1, 2,  1, 3, 2
     };
     m_sceneManager.loadMesh("flat", planeVertices, planeIndices, { .scale = 100 });
-    m_dmlModel.initialize(m_mainDevice.Get(), m_dmlDevice.Get(), m_resourceManager.getCBVHeap(),
-                          m_windowWidth, m_windowHeight);
-    m_dmlModel.setInitializationBindings();
 }
 
 void DX12RenderEngine::initializePipelines()
@@ -76,7 +113,8 @@ void DX12RenderEngine::initializePipelines()
             },
             .vertexShaderPath = D3D12_ROOT"/shaders/compiled/1.vs.cso",
             .pixelShaderPath = D3D12_ROOT"/shaders/compiled/1.ps.cso",
-            .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM},
+            .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R32G32B32A32_FLOAT,
+                           DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT},
             .DSVFormat = DXGI_FORMAT_D32_FLOAT
         });
     NAME_DX_OBJECT(m_finalRenderPipeline.getID3D12Pipeline(), L"RenderPipeline");
@@ -85,12 +123,16 @@ void DX12RenderEngine::initializePipelines()
 void DX12RenderEngine::initialCommands()
 {
     m_sceneManager.uploadMeshesOnGPU(m_commandList.Get(), &m_resourceManager);
-    m_dmlModel.dispatchInitialization(m_dmlCommandRecorder.Get(), m_commandList.Get());
+    for (int i = 0; i < k_nSwapChainBuffers; ++i) {
+        m_dmlModel[i].dispatchInitialization(m_dmlCommandRecorder.Get(), m_commandList.Get());
+    }
 }
 
 void DX12RenderEngine::afterInitialCommands()
 {
-    m_dmlModel.setExecutionBindings();
+    for (int i = 0; i < k_nSwapChainBuffers; ++i) {
+        m_dmlModel[i].setExecutionBindings();
+    }
 }
 
 void DX12RenderEngine::render(const Timer& a_timer)
@@ -112,6 +154,13 @@ void DX12RenderEngine::render(const Timer& a_timer)
     auto currentBufferView = m_resourceManager.getTexture("mainRT", frameIndex).getRTV();
     auto currentDepthBufferView = m_resourceManager.getTexture("mainDepth", frameIndex).getDSV();
     float color[] = { 0, 0, 0, 1 };
+    m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("colorMap", frameIndex).getRTV().cpu,
+                                         color, 0, nullptr);
+    m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("normalMap", frameIndex).getRTV().cpu,
+                                         color, 0, nullptr);
+    m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("toCameraMap", frameIndex).getRTV().cpu,
+                                         color, 0, nullptr);
+
     m_commandList->ClearRenderTargetView(currentBufferView.cpu, color, 0, nullptr);
     m_commandList->ClearDepthStencilView(currentDepthBufferView.cpu,
         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -131,7 +180,13 @@ void DX12RenderEngine::render(const Timer& a_timer)
     m_commandList->IASetIndexBuffer(&indexBufferView);
     m_commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    m_commandList->OMSetRenderTargets(1, &currentBufferView.cpu, true, &currentDepthBufferView.cpu);
+    D3D12_CPU_DESCRIPTOR_HANDLE renderTargets[] = {
+        m_resourceManager.getTexture("mainRT", frameIndex).getRTV().cpu,
+        m_resourceManager.getTexture("colorMap", frameIndex).getRTV().cpu,
+        m_resourceManager.getTexture("normalMap", frameIndex).getRTV().cpu,
+        m_resourceManager.getTexture("toCameraMap", frameIndex).getRTV().cpu
+    };
+    m_commandList->OMSetRenderTargets(_countof(renderTargets), renderTargets, true, &currentDepthBufferView.cpu);
 
     const auto& meshInfo = m_sceneManager.getMeshInfo(m_settings.meshName.c_str());
     m_commandList->DrawIndexedInstanced(meshInfo.indexCount, 1, meshInfo.startIndex, meshInfo.startVertex, 0);
@@ -144,9 +199,9 @@ void DX12RenderEngine::render(const Timer& a_timer)
         renderGUI();
     }
     if (m_settings.ml) {
-        ID3D12DescriptorHeap* descriptorHeapsDml[] = { m_dmlModel.getID3D12DescriptorHeap() };
+        ID3D12DescriptorHeap* descriptorHeapsDml[] = { m_dmlModel[frameIndex].getID3D12DescriptorHeap() };
         m_commandList->SetDescriptorHeaps(_countof(descriptorHeapsDml), descriptorHeapsDml);
-        m_dmlModel.dispatch(m_dmlCommandRecorder.Get(), m_commandList.Get());
+        m_dmlModel[frameIndex].dispatch(m_dmlCommandRecorder.Get(), m_commandList.Get());
     }
     endFrame();
 }

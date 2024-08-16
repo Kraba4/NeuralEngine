@@ -30,6 +30,7 @@ set(IMGUIZMO_SRC
 
 add_compile_definitions(D3D12_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/src/graphics/d3d12")
 add_compile_definitions(RESOURCES="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+add_compile_definitions(MODEL_DATA_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/model_data")
 # Включите подпроекты.
 # add_subdirectory (${CMAKE_SOURCE_DIR}/external/assimp)
 add_subdirectory ("src")

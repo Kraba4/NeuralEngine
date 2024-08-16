@@ -9,6 +9,7 @@ struct RenderSettings {
     float rotatingTimeY = 0;
     int rotateSpeedX = 1;
     int rotateSpeedY = 1;
+    int screenshotCounter = 0;
     Camera camera;
     std::string meshName = "cat";
     bool showGUI = true;

@@ -36,7 +36,12 @@ set(NEURAL_SRC
         )
 
 add_executable(neural ${IMGUI_SRC} ${IMGUIZMO_SRC}  ${NEURAL_SRC})
-
+if(MSVC)
+  add_compile_options($<$<CONFIG:Release>:/MT> # Runtime library: Multi-threaded
+                      $<$<CONFIG:RelWithDebInfo>:/MT> # Runtime library: Multi-threaded                           
+                      $<$<CONFIG:Debug>:/MTd> # Runtime library: Multi-threaded Debug
+                      )
+endif()
 set_target_properties(neural PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 target_link_libraries(neural PRIVATE glfw3)

@@ -96,6 +96,6 @@ private:
 
     ComPtr<IDMLDevice> m_dmlDevice;
     ComPtr<IDMLCommandRecorder> m_dmlCommandRecorder;
-    Model m_dmlModel;
+    Model m_dmlModel[k_nSwapChainBuffers];
 };
 }

@@ -8,6 +8,7 @@
 #include <backends/imgui_impl_dx12.h>
 
 #include <sstream>
+#include <filesystem>
 
 namespace neural {
 
@@ -71,6 +72,13 @@ void Application::initialize(std::string_view a_name, int a_width, int a_height)
     m_game = std::make_shared<game::GameEngine>();
     m_game->initialize();
     m_game->setRenderSettingsPtr(m_renderer->getRenderSettingsPtr());
+
+    std::size_t number_of_files = 0u;
+    for (auto const & file : std::filesystem::directory_iterator(MODEL_DATA_ROOT "/colors"))
+    {
+        ++number_of_files;
+    }
+    m_renderer->getRenderSettingsPtr()->screenshotCounter = number_of_files;
 }
 
 void Application::mainLoop()

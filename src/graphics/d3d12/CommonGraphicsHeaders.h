@@ -3,7 +3,7 @@
 // Use the C++ standard templated min/max
 #define NOMINMAX
 
-#define DML_MANAGED_WEIGHTS 1
+#define DML_MANAGED_WEIGHTS 0
  
 #include <d3d12.h>
 #include <dxgi1_6.h>

@@ -210,13 +210,31 @@ void DX12RenderEngine::endFrame()
         }
 
 
-        auto currentRT =  m_resourceManager.getTexture("mainRT", currentFrameBufferIndex).getID3D12Resource();
-        DirectX::SaveWICTextureToFile(
+        auto colorRT =  m_resourceManager.getTexture("colorMap", currentFrameBufferIndex).getID3D12Resource();
+        auto normalRT =  m_resourceManager.getTexture("normalMap", currentFrameBufferIndex).getID3D12Resource();
+        auto toCameraRT =  m_resourceManager.getTexture("toCameraMap", currentFrameBufferIndex).getID3D12Resource();
+
+        std::wstring suffix = std::to_wstring(m_settings.screenshotCounter); suffix += L".dds";
+        ++m_settings.screenshotCounter; 
+        std::wstring colorFileName    = MODEL_DATA_ROOT L"/colors/color"; colorFileName += suffix;
+        std::wstring normalFileName   = MODEL_DATA_ROOT L"/normals/normal"; normalFileName += suffix;
+        std::wstring toCameraFileName = MODEL_DATA_ROOT L"/toCameras/toCamera"; toCameraFileName += suffix;
+
+        DirectX::SaveDDSTextureToFile(
             m_commandQueue.Get(), 
-            currentRT,
-            GUID_ContainerFormatPng, L"screenshot.png",
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
-        
+            colorRT, colorFileName.c_str(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        DirectX::SaveDDSTextureToFile(
+            m_commandQueue.Get(), 
+            normalRT, normalFileName.c_str(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        DirectX::SaveDDSTextureToFile(
+            m_commandQueue.Get(), 
+            toCameraRT, toCameraFileName.c_str(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
         m_settings.doScreenShot = false;
     }
     m_frameBufferFenceValue[currentFrameBufferIndex] = m_currentFrame;

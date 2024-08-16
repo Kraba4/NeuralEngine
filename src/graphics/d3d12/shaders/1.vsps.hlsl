@@ -34,10 +34,26 @@ void VS(float3 iPos : POSITION,
     //oPos.y = -oPos.y;
 }
 
-float4 PS(float4 oPos : SV_POSITION, Surface oSurface) : SV_Target
+struct PS_OUTPUT
 {
-    // float3 color = 1;
+    float4 Screen: SV_Target0;
+    float4 Color: SV_Target1;
+    float4 Normal: SV_Target2;
+    float4 ToCamera: SV_Target3;
+};
+
+PS_OUTPUT PS(float4 oPos : SV_POSITION, Surface oSurface)
+{
+    float3 color = 1;
     float3 lightDir = normalize(LightPosition - oSurface.posW);
-    // return float4(color * (max(dot(lightDir, normalize(oSurface.normalW)), 0)) + 0.2f, 1);
-    return float4(lightDir, 1);
+    float3 normal = normalize(oSurface.normalW);
+    
+    PS_OUTPUT output;
+    output.Screen = float4(color * (max(dot(lightDir, normal), 0)) + 0.2f, 1);
+    output.Color = float4(color * (max(dot(lightDir, normal), 0)) + 0.2f, 1);
+    output.Normal = float4(normal, 1);
+    output.ToCamera = float4(lightDir, 1);
+
+    return output;
+    // return float4(lightDir, 1);
 }
