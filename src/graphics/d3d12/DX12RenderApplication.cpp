@@ -3,66 +3,9 @@
 
 #include <iostream>
 #include <cmath>
-// namespace {
-//     void saveBufferToJson(Buffer& a_buffer, std::string path) {
-//         std::vector<float> bufferData(a_buffer.getTotalSize() / sizeof(float) + 1);
 
-//         memcpy(bufferData.data(), a_buffer.getMappedData(), a_buffer.getTotalSize());
-
-//         nlohmann::json bufferJson;
-//         bufferJson["data"] = bufferData;
-//         std::ofstream file(path); file << bufferJson;
-//     }
-// }  // anonymous namespace
 namespace neural::graphics {
-// namespace {
-//     void createReadbackBufferForTexture(ResourceManager& a_resourceManager, std::string a_textureName,
-//                                         uint32_t a_frameIndex) {
-//         Texture& texture = a_resourceManager.getTexture(a_textureName, a_frameIndex);
-//         auto desc = texture.getID3D12Resource()->GetDesc();
-//         UINT64 totalResourceSize = 0;
-//         UINT64 fpRowPitch = 0;
-//         UINT fpRowCount = 0;
-//         // Get the rowcount, pitch and size of the top mip
-//         a_resourceManager.getDevice()->GetCopyableFootprints(&desc, 0, 1, 0, nullptr, &fpRowCount, &fpRowPitch,
-//                                             &totalResourceSize);
-        
-//         // Round up the srcPitch to multiples of 256 (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT)
-//         const UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
 
-//         std::string readbackBufferName = a_textureName + "Readback";
-//         auto& colorRTReadBack = a_resourceManager.createBufferInFrame(readbackBufferName, a_frameIndex, {
-//                 .size = texture.getHeight(),
-//                 .elementSize = dstRowPitch,
-//                 .initialState = D3D12_RESOURCE_STATE_COPY_DEST,
-//                 .heapType = D3D12_HEAP_TYPE_READBACK
-//         });
-//         colorRTReadBack.mapData();
-//     }
-//     void copyTextureToReadbackBuffer(ID3D12GraphicsCommandList* commandList,
-//                                      const Texture& source, Buffer& destination) {
-//         // Transition the resource if necessary
-//         DirectX::TransitionResource(commandList, source.getID3D12Resource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-//         // Get the copy target location
-//         D3D12_PLACED_SUBRESOURCE_FOOTPRINT bufferFootprint = {};
-//         bufferFootprint.Footprint.Width = static_cast<UINT>(source.getWidth());
-//         bufferFootprint.Footprint.Height = source.getHeight();
-//         bufferFootprint.Footprint.Depth = 1;
-//         bufferFootprint.Footprint.RowPitch = static_cast<UINT>(destination.getElementSize());
-//         bufferFootprint.Footprint.Format = source.getFormat();
-
-//         const CD3DX12_TEXTURE_COPY_LOCATION copyDest(destination.getID3D12Resource(), bufferFootprint);
-//         const CD3DX12_TEXTURE_COPY_LOCATION copySrc(source.getID3D12Resource(), 0);
-
-//         // Copy the texture
-//         commandList->CopyTextureRegion(&copyDest, 0, 0, 0, &copySrc, nullptr);
-
-//         // Transition the resource to the next state
-//         DirectX::TransitionResource(commandList, source.getID3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-//     }
-// }  // anonymous namespace
 void DX12RenderEngine::initializeFrameResources(uint32_t a_frameIndex)
 {
     ID3D12Resource* swapchainBuffer;
