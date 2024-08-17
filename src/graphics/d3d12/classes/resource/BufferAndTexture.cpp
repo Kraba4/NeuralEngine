@@ -37,6 +37,9 @@ void Buffer::initialize(ID3D12Device* a_device, DescriptorHeap* a_srvUavHeap, co
 
     m_device = a_device;
     m_size = a_createInfo.size;
+    // m_elementSize = (a_createInfo.heapType == D3D12_HEAP_TYPE_READBACK) 
+    //                 ? CalcConstantBufferByteSize(a_createInfo.elementSize)
+    //                 : a_createInfo.elementSize;
     m_elementSize = a_createInfo.elementSize;
     m_srvUavHeap = a_srvUavHeap;
     

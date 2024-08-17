@@ -19,10 +19,12 @@
 #include <backends/imgui_impl_dx12.h>
 #include <ImGuizmo.h>
 #include <directx_tool_kit/Inc/ScreenGrab.h>
+#include <directx_tool_kit/Inc/DirectXHelpers.h>
 #include <wincodec.h>
 #include <DirectML.h>
 
 #include <memory>
+#include <queue>
 
 using Microsoft::WRL::ComPtr;
 namespace neural::graphics {
@@ -97,5 +99,7 @@ private:
     ComPtr<IDMLDevice> m_dmlDevice;
     ComPtr<IDMLCommandRecorder> m_dmlCommandRecorder;
     Model m_dmlModel[k_nSwapChainBuffers];
+
+    // std::queue<uint64_t> m_screenshotWaitFences; 
 };
 }

@@ -46,6 +46,19 @@ Buffer& ResourceManager::createBufferInUnique(std::string a_name, const BufferCr
     
     return buffer;
 }
+Buffer& ResourceManager::createBufferInFrame(std::string a_name, uint32_t a_frame, const BufferCreateInfo& a_createInfo)
+{
+    assert(!m_frameResources[a_frame].m_buffers.contains(a_name)); // name is already taken
+
+    m_frameResources[a_frame].m_buffers[a_name] = {};
+    Buffer& buffer = m_frameResources[a_frame].m_buffers[a_name];
+    buffer.initialize(m_device, &m_cbvHeap, a_createInfo);
+
+    std::wstring wName(a_name.begin(), a_name.end());
+    NAME_DX_OBJECT(buffer.m_resource, wName);
+    
+    return buffer;
+}
 Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, const TextureCreateInfo& a_createInfo)
 {
     assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken

@@ -7,6 +7,7 @@
 #include "Application.h"
 #pragma warning(1:4242)
 #pragma warning(1:4267)
+#pragma warning(1:4244)
 
 constexpr int32_t WIDTH = 800;
 constexpr int32_t HEIGHT = 600;

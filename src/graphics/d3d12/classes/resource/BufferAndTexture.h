@@ -61,7 +61,7 @@ public:
     //    assert(a_elementIndex * m_elementSize < m_size * m_elementSize);
     //    memcpy(&m_mappedData[a_elementIndex * m_elementSize], &a_data, m_elementSize);
     //}
-
+    public:
     void initialize(ID3D12Device* a_device, DescriptorHeap* a_srvUavHeap, const BufferCreateInfo& a_createInfo);
     void setSrvUavHeap(DescriptorHeap* a_srvUavHeap) {
         m_srvUavHeap = a_srvUavHeap;
@@ -97,7 +97,18 @@ public:
     //    
     //}
     D3D12_VERTEX_BUFFER_VIEW getVertexBufferView() const;
-
+    uint32_t getElementSize() const {
+        return m_elementSize;
+    }
+    uint32_t getSize() const {
+        return m_size;
+    }
+    uint32_t getTotalSize() const {
+        return m_size * m_elementSize;
+    }
+    static uint32_t CalcConstantBufferByteSize(uint32_t a_byteSize) {
+        return (a_byteSize + 255) & ~255;
+    }
     D3D12_INDEX_BUFFER_VIEW getIndexBufferView() const;
     ~Buffer() {
         if (m_resource != nullptr) {
@@ -153,20 +164,20 @@ public:
         assert(m_resource);
         return m_resource.Get();
     }
-    uint64_t getWidth() {
+    uint64_t getWidth() const {
         return m_width;
     }
-    uint32_t getHeight() {
+    uint32_t getHeight() const {
         return m_height;
     }
-    uint16_t getDepthOrArraySize() {
+    uint16_t getDepthOrArraySize() const {
         return m_depthOrArraySize;
     }
-    uint16_t getMipLevels() {
+    uint16_t getMipLevels() const {
         return m_mipLevels;
     }
-    DXGI_FORMAT getFormat() {
-        m_format;
+    DXGI_FORMAT getFormat() const {
+        return m_format;
     }
 
     struct ViewParams;

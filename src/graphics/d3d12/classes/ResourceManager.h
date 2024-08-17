@@ -19,6 +19,11 @@ public:
         return m_frameResources[a_frame].m_constantBuffers[a_name];
     }
     Buffer& createBufferInUnique(std::string a_name, const BufferCreateInfo& a_createInfo);
+    Buffer& createBufferInFrame(std::string a_name, uint32_t a_frame, const BufferCreateInfo& a_createInfo);
+    Buffer& getBuffer(std::string a_name, uint32_t a_frame) {
+        assert(m_frameResources[a_frame].m_buffers.contains(a_name));
+        return m_frameResources[a_frame].m_buffers[a_name];
+    }
 
     Texture& createTextureInFrame(std::string a_name, uint32_t a_frame, const TextureCreateInfo& a_createInfo);
     Texture& createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource);
@@ -26,7 +31,7 @@ public:
         assert(m_frameResources[a_frame].m_textures.contains(a_name));
         return m_frameResources[a_frame].m_textures[a_name];
     }
-    ID3D12Device* getDevice() {
+    ID3D12Device* getDevice() const {
         return m_device;
     }
     DescriptorHeap* getRTVHeap() {
@@ -37,6 +42,9 @@ public:
     }
     DescriptorHeap* getCBVHeap() {
         return &m_cbvHeap;
+    }
+    ID3D12Device* getDevice() {
+        return m_device;
     }
 private:
     DescriptorHeap m_rtvHeap;
