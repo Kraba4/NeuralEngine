@@ -54,9 +54,9 @@ void DX12RenderEngine::renderGUI() {
         ImGui::Begin("Render settings");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputInt("Screenshot Counter", &m_settings.screenshotCounter);
-        ImGui::SliderFloat("Rotation angle", &m_settings.rotatingTimeY, 0, DirectX::XM_2PI);
-        ImGui::SliderInt("Rotation speed", &m_settings.rotateSpeedY, -10, 10);
-        ImGui::Checkbox("Enable rotating", &m_settings.enableRotating);
+        // ImGui::SliderFloat("Rotation angle", &m_settings.rotatingTimeY, 0, DirectX::XM_2PI);
+        // ImGui::SliderInt("Rotation speed", &m_settings.rotateSpeedY, -10, 10);
+        // ImGui::Checkbox("Enable rotating", &m_settings.enableRotating);
         ImGui::NewLine();
 
         ImGui::End();

@@ -4,11 +4,11 @@ import subprocess
 import pathlib
 
 if __name__ == '__main__':
-    fxc_cmd = "D:\\Windows Kits\\10\\bin\\10.0.22621.0\\x86\\fxc.exe"
+    fxc_cmd = "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x86\\fxc.exe"
     version_vs = "vs_5_0"
     version_ps = "ps_5_0"
     
-    shader_list = ["1.vsps.hlsl"]
+    shader_list = ["1.vsps.hlsl", "basic.vsps.hlsl"]
     
     for shader in shader_list:
         words = shader.split('.')

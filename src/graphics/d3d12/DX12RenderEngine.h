@@ -77,6 +77,7 @@ private:
     } m_cbCameraParams;
 
     GraphicsPipeline m_finalRenderPipeline;
+    GraphicsPipeline m_basicRenderPipeline;
     RootSignature m_rootSignature;
 
     ComPtr<ID3D12Fence> m_framesFence;

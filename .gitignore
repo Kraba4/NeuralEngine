@@ -15,6 +15,3 @@ _deps
 screenshot.png
 /.vscode
 *.pdb
-/model_data/colors/*
-/model_data/normals/*
-/model_data/toCameras/*

@@ -122,7 +122,22 @@ void DX12RenderEngine::initializePipelines()
                            DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT},
             .DSVFormat = DXGI_FORMAT_D32_FLOAT
         });
-    NAME_DX_OBJECT(m_finalRenderPipeline.getID3D12Pipeline(), L"RenderPipeline");
+    NAME_DX_OBJECT(m_finalRenderPipeline.getID3D12Pipeline(), L"FinalRenderPipeline");
+
+    m_basicRenderPipeline.initialize(m_mainDevice.Get(), std::string_view("basic_render"),
+        GraphicsPipeline::CreateInfo{
+            .rootSignature = m_rootSignature,
+            .inputLayout = {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "TEXCOORD",   0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+            },
+            .vertexShaderPath = D3D12_ROOT"/shaders/compiled/basic.vs.cso",
+            .pixelShaderPath = D3D12_ROOT"/shaders/compiled/basic.ps.cso",
+            .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM},
+            .DSVFormat = DXGI_FORMAT_D32_FLOAT
+        });
+    NAME_DX_OBJECT(m_basicRenderPipeline.getID3D12Pipeline(), L"BasicRenderPipeline");
 }
 
 void DX12RenderEngine::initialCommands()
@@ -159,19 +174,24 @@ void DX12RenderEngine::render(const Timer& a_timer)
     auto currentBufferView = m_resourceManager.getTexture("mainRT", frameIndex).getRTV();
     auto currentDepthBufferView = m_resourceManager.getTexture("mainDepth", frameIndex).getDSV();
     float color[] = { 0, 0, 0, 1 };
-    m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("colorMap", frameIndex).getRTV().cpu,
-                                         color, 0, nullptr);
-    m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("normalMap", frameIndex).getRTV().cpu,
-                                         color, 0, nullptr);
-    m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("toCameraMap", frameIndex).getRTV().cpu,
-                                         color, 0, nullptr);
 
     m_commandList->ClearRenderTargetView(currentBufferView.cpu, color, 0, nullptr);
     m_commandList->ClearDepthStencilView(currentDepthBufferView.cpu,
         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
     m_commandList->SetGraphicsRootSignature(m_rootSignature.getID3D12RootSignature());
-    m_commandList->SetPipelineState(m_finalRenderPipeline.getID3D12Pipeline());
+
+    const bool isFinalPipeline = m_settings.ml || m_settings.doScreenShot;
+    if (isFinalPipeline) {
+        m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("colorMap", frameIndex).getRTV().cpu,
+                                            color, 0, nullptr);
+        m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("normalMap", frameIndex).getRTV().cpu,
+                                            color, 0, nullptr);
+        m_commandList->ClearRenderTargetView(m_resourceManager.getTexture("toCameraMap", frameIndex).getRTV().cpu,
+                                            color, 0, nullptr);
+        m_commandList->SetPipelineState(m_finalRenderPipeline.getID3D12Pipeline());
+    } else {
+        m_commandList->SetPipelineState(m_basicRenderPipeline.getID3D12Pipeline());
+    }
 
     // m_commandList->SetGraphicsRootDescriptorTable(0, m_constantBuffer[currentFrameBufferIndex].getConstantBufferView().gpu);
 
@@ -202,7 +222,7 @@ void DX12RenderEngine::render(const Timer& a_timer)
         normalMap.getRTV().cpu,
         toCameraMap.getRTV().cpu
     };
-    m_commandList->OMSetRenderTargets(_countof(renderTargets), renderTargets, true, &currentDepthBufferView.cpu);
+    m_commandList->OMSetRenderTargets(isFinalPipeline ? _countof(renderTargets) : 1, renderTargets, true, &currentDepthBufferView.cpu);
 
     const auto& meshInfo = m_sceneManager.getMeshInfo(m_settings.meshName.c_str());
     m_commandList->DrawIndexedInstanced(meshInfo.indexCount, 1, meshInfo.startIndex, meshInfo.startVertex, 0);
