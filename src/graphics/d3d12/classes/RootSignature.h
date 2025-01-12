@@ -48,7 +48,8 @@ public:
         D3D12_SHADER_VISIBILITY shaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     };
 
-    void initialize(ID3D12Device* a_device, const std::vector<RootParameter>& slots);
+    void initialize(ID3D12Device* a_device, const std::vector<RootParameter>& slots,
+                    const std::vector<D3D12_STATIC_SAMPLER_DESC>& a_staticSamplers);
     ID3D12RootSignature* getID3D12RootSignature();
 private:
     ComPtr<ID3D12RootSignature> m_rootSignature;

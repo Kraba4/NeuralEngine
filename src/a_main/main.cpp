@@ -9,8 +9,8 @@
 #pragma warning(1:4267)
 #pragma warning(1:4244)
 
-constexpr int32_t WIDTH = 800;
-constexpr int32_t HEIGHT = 600;
+constexpr int32_t WIDTH = 1400;
+constexpr int32_t HEIGHT = 900;
 
 int main() {
     neural::Application app;

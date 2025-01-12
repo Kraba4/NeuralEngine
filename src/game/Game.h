@@ -9,7 +9,6 @@ public:
 		m_isRunning = true;
 	}
 	void processInputs(const AppInput& a_appInput, double dt);
-	void drawFrame();
 	void setRenderSettingsPtr(RenderSettings* a_pRenderSettings) {
 		m_pRenderSettings = a_pRenderSettings;
 	}

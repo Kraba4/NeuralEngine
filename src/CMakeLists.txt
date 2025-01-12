@@ -18,9 +18,10 @@ set(NEURAL_SRC
         ${CMAKE_SOURCE_DIR}/src/game/ProcessInputs.cpp
 
         ${CMAKE_SOURCE_DIR}/src/utils/Utils.cpp
+        ${CMAKE_SOURCE_DIR}/src/utils/ParShapes.cpp
 
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12Initialize.cpp
-        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12RenderApplication.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12Sample.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/DX12Gui.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ComputePipeline.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/RootSignature.cpp
@@ -30,6 +31,7 @@ set(NEURAL_SRC
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ResourceManager.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/BufferAndTexture.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/ConstantBuffer.cpp
+        ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/resource/LightGrid.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/ConvolutionLayer.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/ConvolutionLayersContainer.cpp
         ${CMAKE_SOURCE_DIR}/src/graphics/d3d12/classes/ml/Model.cpp

@@ -11,9 +11,13 @@ struct RenderSettings {
     int rotateSpeedY = 1;
     int screenshotCounter = 0;
     Camera camera;
-    std::string meshName = "cat";
+    int selectedMesh = 0;
+    int selectedCamera = -1;
     bool showGUI = true;
     bool doScreenShot = false;
     bool ml = false;
+    bool bakeLightGrid = false;
+    bool showLightGrid = true;
+    bool showProbeEnvironment = false;
 };
 }

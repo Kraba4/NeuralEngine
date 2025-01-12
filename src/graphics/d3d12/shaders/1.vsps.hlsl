@@ -1,13 +1,17 @@
 cbuffer rootConstant : register(b0)
 {
-    int objectId;
+    float4x4 WorldMatrix;
+    float4 ObjectColor;
 };
 
 cbuffer cbPerObject : register(b1)
 {
-    float4x4 WorldMatrix;
     float4x4 ViewProjMatrix;
-    float3 LightPosition;
+    float4x4 CubeProjMatrix;
+    float4x4 CubeFaceViewMatrix[6];
+    float4 LightPosition_Null;
+    float4 GridPos_ElementScale;
+    float4 Width_Height_Depth_Distance;
 };
 struct Surface
 {
@@ -22,8 +26,8 @@ void VS(float3 iPos : POSITION,
         out Surface oSurface)
 {
     
-    float3 posW = objectId == 0 ? mul(float4(iPos, 1), WorldMatrix).xyz : iPos;
-    float3 normalW = objectId == 0 ? mul(float4(iNormal, 0), WorldMatrix).xyz : iNormal;
+    float3 posW = mul(float4(iPos, 1), WorldMatrix).xyz;
+    float3 normalW = mul(float4(iNormal, 0), WorldMatrix).xyz;
     
     oSurface.posW = posW;
     oSurface.normalW = normalW;
@@ -44,8 +48,8 @@ struct PS_OUTPUT
 
 PS_OUTPUT PS(float4 oPos : SV_POSITION, Surface oSurface)
 {
-    float3 color = 1;
-    float3 lightDir = normalize(LightPosition - oSurface.posW);
+    float3 color = ObjectColor.xyz;
+    float3 lightDir = normalize(LightPosition_Null.xyz - oSurface.posW);
     float3 normal = normalize(oSurface.normalW);
     
     PS_OUTPUT output;

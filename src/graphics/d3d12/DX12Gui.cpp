@@ -2,7 +2,7 @@
 
 namespace neural::graphics {
 void render_imguizmo(ImGuizmo::OPERATION& a_currentGizmoOperation, ImGuizmo::MODE& a_currentGizmoMode,
-    Camera& a_camera, DirectX::XMFLOAT4X4* a_selectedMatrix)
+    Camera& a_camera, DirectX::XMFLOAT4X4* a_selectedMatrix, SceneManager& a_sceneManager)
 {
     ImGuizmo::BeginFrame();
     if (ImGui::Begin("gizmo window"))
@@ -38,6 +38,14 @@ void render_imguizmo(ImGuizmo::OPERATION& a_currentGizmoOperation, ImGuizmo::MOD
         ImGui::InputFloat3("Sc", matrixScale);
         ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation,
             matrixRotation, matrixScale, &a_selectedMatrix->_11);
+
+        static std::vector<const char*> objectNames;
+        static int selectedObjectIndex = 2;
+        if (objectNames.size() != a_sceneManager.numObjects()) {
+            objectNames = a_sceneManager.getObjectNames();
+        }
+        ImGui::ListBox("Selected object", &selectedObjectIndex, objectNames.data(), objectNames.size(), 2);
+        a_selectedMatrix = &a_sceneManager.getObjectByName(objectNames[selectedObjectIndex]).worldMatrix;
     }
     ImGui::End();
     ImGuiIO& io = ImGui::GetIO();
@@ -52,16 +60,39 @@ void DX12RenderEngine::renderGUI() {
     ImGui::NewFrame();
     {
         ImGui::Begin("Render settings");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("Average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputInt("Screenshot Counter", &m_settings.screenshotCounter);
+        ImGui::InputInt("Selected camera", &m_settings.selectedCamera);
+        ImGui::End();
+
+        ImGui::Begin("Light Grid settings");
+        
+        ImGui::Checkbox("Show Grid", &m_settings.showLightGrid);
+        float gridPos[3] = {m_generalCB.GridPos_ElementScale.x, m_generalCB.GridPos_ElementScale.y, m_generalCB.GridPos_ElementScale.z};
+        ImGui::InputFloat3("Position", gridPos);
+        m_generalCB.GridPos_ElementScale.x = gridPos[0];
+        m_generalCB.GridPos_ElementScale.y = gridPos[1];
+        m_generalCB.GridPos_ElementScale.z = gridPos[2];
+
+        // TODO: height
+        int gridSize[3] = {m_generalCB.Width_Height_Depth_Distance.x, m_generalCB.Width_Height_Depth_Distance.y, m_generalCB.Width_Height_Depth_Distance.z};
+        ImGui::SliderInt3("Sizes", gridSize, 1, 10);
+        m_generalCB.Width_Height_Depth_Distance.x = gridSize[0];
+        m_generalCB.Width_Height_Depth_Distance.y = gridSize[1];
+        m_generalCB.Width_Height_Depth_Distance.z = gridSize[2];
+
+        ImGui::SliderFloat("Element Scale", &m_generalCB.GridPos_ElementScale.w, 0.1, 1);
+        ImGui::SliderFloat("Element Distance", &m_generalCB.Width_Height_Depth_Distance.w, 2, 10);
+
         // ImGui::SliderFloat("Rotation angle", &m_settings.rotatingTimeY, 0, DirectX::XM_2PI);
         // ImGui::SliderInt("Rotation speed", &m_settings.rotateSpeedY, -10, 10);
         // ImGui::Checkbox("Enable rotating", &m_settings.enableRotating);
         ImGui::NewLine();
-
+        ImGui::Checkbox("Bake light", &m_settings.bakeLightGrid);
+        ImGui::Checkbox("Show env bake", &m_settings.showProbeEnvironment);
         ImGui::End();
     }
-    render_imguizmo(m_currentGizmoOperation, m_currentGizmoMode, m_settings.camera, m_selectedMatrix);
+    render_imguizmo(m_currentGizmoOperation, m_currentGizmoMode, m_settings.camera, m_selectedMatrix, m_sceneManager);
     ImGui::Render();
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
 }

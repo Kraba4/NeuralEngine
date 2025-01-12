@@ -9,10 +9,21 @@ void GraphicsPipeline::initialize(ID3D12Device* a_device, std::string_view a_deb
         pipelineDesc.InputLayout = { a_info.inputLayout.data(), static_cast<uint32_t>(a_info.inputLayout.size()) };
     }
     pipelineDesc.pRootSignature = a_info.rootSignature.getID3D12RootSignature();
-    std::vector<char> vsByteCode = utils::loadBinary(a_info.vertexShaderPath);
-    pipelineDesc.VS = { vsByteCode.data(), vsByteCode.size() };
-    std::vector<char> psByteCode = utils::loadBinary(a_info.pixelShaderPath);
-    pipelineDesc.PS = { psByteCode.data(), psByteCode.size() };
+    std::vector<char> vsByteCode;
+    std::vector<char> psByteCode;
+    std::vector<char> gsByteCode;
+    if (a_info.vertexShaderPath.size() > 0) {
+        vsByteCode = utils::loadBinary(a_info.vertexShaderPath);
+        pipelineDesc.VS = { vsByteCode.data(), vsByteCode.size() };
+    }
+    if (a_info.pixelShaderPath.size() > 0) {
+        psByteCode = utils::loadBinary(a_info.pixelShaderPath);
+        pipelineDesc.PS = { psByteCode.data(), psByteCode.size() };
+    }
+    if (a_info.geometryShaderPath.size() > 0) {
+        gsByteCode = utils::loadBinary(a_info.geometryShaderPath);
+        pipelineDesc.GS = { gsByteCode.data(), gsByteCode.size() };
+    }
     pipelineDesc.RasterizerState = a_info.rasterizerState;
     pipelineDesc.BlendState = a_info.blendState;
     pipelineDesc.DepthStencilState = a_info.depthStencilState;
@@ -24,7 +35,6 @@ void GraphicsPipeline::initialize(ID3D12Device* a_device, std::string_view a_deb
     }
     pipelineDesc.SampleDesc = a_info.sampleDesc;
     pipelineDesc.DSVFormat = a_info.DSVFormat;
-
     DX_CALL(a_device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(m_pipeline.GetAddressOf())));
 }
 }

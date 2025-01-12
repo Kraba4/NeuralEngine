@@ -18,11 +18,12 @@ public:
     struct CreateInfo {
         RootSignature rootSignature;
         std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
-        std::string vertexShaderPath;
+        std::string vertexShaderPath = "";
+        std::string geometryShaderPath = "";
         D3D12_RASTERIZER_DESC rasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        std::string pixelShaderPath;
+        std::string pixelShaderPath = "";
         D3D12_BLEND_DESC blendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        D3D12_DEPTH_STENCIL_DESC depthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);;
+        D3D12_DEPTH_STENCIL_DESC depthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
         UINT sampleMask = UINT_MAX;
         D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         std::vector<DXGI_FORMAT> RTVFormats;

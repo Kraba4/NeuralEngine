@@ -1,8 +1,8 @@
 #include "SceneManager.h"
 #include "ResourceManager.h"
+#include <utils/Utils.h>
 
 #include <iostream>
-#include <utils/Utils.h>
 
 namespace neural::graphics {
 using utils::transformFloat3;
@@ -12,12 +12,46 @@ using DirectX::XMMatrixScaling;
 using DirectX::XMMatrixMultiply;
 using DirectX::XMMatrixRotationRollPitchYaw;
 
-void SceneManager::initialize(ID3D12Device* a_device) {
+void SceneManager::initialize(ID3D12Device* a_device, int a_numMeshes) {
     m_device = a_device;
+    m_meshes.resize(a_numMeshes);
 }
-void SceneManager::loadMesh(const char* a_meshName, const std::vector<Vertex>& a_vertices,
+
+void SceneManager::loadParMesh(int a_meshId, const char* a_meshName, par_shapes_mesh* a_parMesh, bool a_needLoadUV, bool a_needLoadNormals) {
+    assert(a_meshId < m_meshes.size());
+    MeshInfo meshInfo;
+    meshInfo.startVertex = m_vertices.size();
+    for (int indexPoint = 0; indexPoint < a_parMesh->npoints; ++indexPoint) {
+        constexpr int numPointCoords = 3;
+        constexpr int numUVCoords = 2;
+        const int indexPos = numPointCoords * indexPoint;
+        const int indexUV = numUVCoords * indexPoint;
+        m_vertices.push_back({
+            { a_parMesh->points[indexPos], a_parMesh->points[indexPos + 1], a_parMesh->points[indexPos + 2] },
+            { a_needLoadNormals ? a_parMesh->normals[indexPos] : 1, a_needLoadNormals ? a_parMesh->normals[indexPos + 1] : 1, a_needLoadNormals ? a_parMesh->normals[indexPos + 2] : 1 },
+            { a_needLoadUV ? a_parMesh->tcoords[indexUV] : 1, a_needLoadUV ? a_parMesh->tcoords[indexUV + 1] : 1}
+            });
+    }
+    meshInfo.vertexCount = m_vertices.size() - meshInfo.startVertex;
+    std::cout << a_meshName << " num vertices = " << meshInfo.vertexCount << std::endl;
+
+    meshInfo.startIndex = m_indices.size();
+    for (int triangleIndex = 0; triangleIndex < a_parMesh->ntriangles; ++triangleIndex) {
+        constexpr int numTriangleVertices = 3;
+        const int indexIndex = numTriangleVertices * triangleIndex;
+        m_indices.push_back(a_parMesh->triangles[indexIndex]);
+        m_indices.push_back(a_parMesh->triangles[indexIndex + 1]);
+        m_indices.push_back(a_parMesh->triangles[indexIndex + 2]);
+    }
+    meshInfo.indexCount = m_indices.size() - meshInfo.startIndex;
+
+    m_meshes[a_meshId] = meshInfo;
+}
+
+void SceneManager::loadMesh(int a_meshId, const char* a_meshName, const std::vector<Vertex>& a_vertices,
                             const std::vector<uint32_t>& a_indices, MeshTransform a_transform)
 {
+    assert(a_meshId < m_meshes.size());
     XMMATRIX scalingMatrix = XMMatrixScaling(a_transform.scale, a_transform.scale, a_transform.scale);
     XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(DirectX::XMConvertToRadians(a_transform.rotation.y),
         DirectX::XMConvertToRadians(a_transform.rotation.x),
@@ -39,15 +73,18 @@ void SceneManager::loadMesh(const char* a_meshName, const std::vector<Vertex>& a
             });
     }
     meshInfo.vertexCount = m_vertices.size() - meshInfo.startVertex;
+    std::cout << a_meshName << " num vertices = " << meshInfo.vertexCount << std::endl;
 
     meshInfo.startIndex = m_indices.size();
     for (int i = 0; i < a_indices.size(); ++i) {
         m_indices.push_back(a_indices[i]);
     }
     meshInfo.indexCount = m_indices.size() - meshInfo.startIndex;
-    m_meshes[a_meshName] = meshInfo;
+
+    m_meshes[a_meshId] = meshInfo;
 }
-void SceneManager::loadMeshFromFile(const char* a_meshName, const char* a_path, MeshTransform a_transform) {
+void SceneManager::loadMeshFromFile(int a_meshId, const char* a_meshName, const char* a_path, MeshTransform a_transform) {
+    assert(a_meshId < m_meshes.size());
     Assimp::Importer assetImporter;
     const aiScene* scene = assetImporter.ReadFile(a_path,
         aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
@@ -75,6 +112,7 @@ void SceneManager::loadMeshFromFile(const char* a_meshName, const char* a_path, 
             });
     }
     meshInfo.vertexCount = m_vertices.size() - meshInfo.startVertex;
+    std::cout << a_meshName << " num vertices = " << meshInfo.vertexCount << std::endl;
 
     meshInfo.startIndex = m_indices.size();
     for (int i = 0; i < mesh->mNumFaces; ++i) {
@@ -97,28 +135,30 @@ void SceneManager::loadMeshFromFile(const char* a_meshName, const char* a_path, 
         std::cout << a_path << ": not just triangles\n";
     }
 #endif
-    m_meshes[a_meshName] = meshInfo;
+    m_meshes[a_meshId] = meshInfo;
 }
-void SceneManager::uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList, 
-                                     ResourceManager* a_pResourceManager) {
-    m_vertexBuffer = a_pResourceManager->createBufferInUnique("VertexBuffer", {
+void SceneManager::uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList,
+                                     ResourceManager* a_pResourceManager,
+                                     int a_vertexBufferId, int a_indexBufferId,
+                                     int a_vertexBufferUploadId, int a_indexBufferUploadId) {
+    m_vertexBuffer = a_pResourceManager->createBufferInUnique(a_vertexBufferId, "VertexBuffer", {
         .size = m_vertices.size(),
         .elementSize = sizeof(m_vertices[0]),
         });
 
-    m_indexBuffer = a_pResourceManager->createBufferInUnique("IndexBuffer", {
+    m_indexBuffer = a_pResourceManager->createBufferInUnique(a_indexBufferId, "IndexBuffer",  {
         .size = m_indices.size(),
         .elementSize = sizeof(m_indices[0]),
         });
 
-    Buffer& uploadVertex = a_pResourceManager->createBufferInUnique("VertexBufferUpload", {
+    Buffer& uploadVertex = a_pResourceManager->createBufferInUnique(a_vertexBufferUploadId, "VertexBufferUpload", {
         .size = m_vertices.size(),
         .elementSize = sizeof(m_vertices[0]),
         .initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
         .heapType = D3D12_HEAP_TYPE_UPLOAD
         });
 
-    Buffer& uploadIndex = a_pResourceManager->createBufferInUnique("IndexBufferUpload", {
+    Buffer& uploadIndex = a_pResourceManager->createBufferInUnique(a_indexBufferUploadId, "IndexBufferUpload", {
         .size = m_indices.size(),
         .elementSize = sizeof(m_indices[0]),
         .initialState = D3D12_RESOURCE_STATE_GENERIC_READ,

@@ -2,7 +2,8 @@
 
 namespace neural::graphics {
 
-void RootSignature::initialize(ID3D12Device* a_device, const std::vector<RootParameter>& a_slots)
+void RootSignature::initialize(ID3D12Device* a_device, const std::vector<RootParameter>& a_slots,
+                               const std::vector<D3D12_STATIC_SAMPLER_DESC>& a_staticSamplers)
 {
     assert(a_device);
     std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters(a_slots.size());
@@ -57,9 +58,9 @@ void RootSignature::initialize(ID3D12Device* a_device, const std::vector<RootPar
 
     }
 
-    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(slotRootParameters.size(), slotRootParameters.data(), 0,
-        nullptr,
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(slotRootParameters.size(), slotRootParameters.data(),
+                                            a_staticSamplers.size(), a_staticSamplers.data(),
+                                            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> serializedRootSig = nullptr;
     ComPtr<ID3DBlob> errorBlob = nullptr;

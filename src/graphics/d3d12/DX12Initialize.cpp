@@ -50,7 +50,6 @@ void DX12RenderEngine::initialize(HWND a_window, int a_width, int a_height)
 
     m_settings.camera.setFrustum(DirectX::XMConvertToRadians(45), static_cast<float>(m_windowWidth) / m_windowHeight, 1, 1000);
     DirectX::XMStoreFloat4x4(&m_worldMatrix,DirectX::XMMatrixTranslation(0, 3, 10));
-    m_selectedMatrix = &m_worldMatrix;
 }
 
 void DX12RenderEngine::createDXGIFactory()
@@ -129,6 +128,12 @@ void DX12RenderEngine::createCommandAllocators()
     }
 }
 
+void DX12RenderEngine::createFence()
+{
+    m_mainDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_framesFence));
+    NAME_DX_OBJECT(m_framesFence, L"FrameFence");
+}
+
 void DX12RenderEngine::createCommandListAndSendInitialCommands()
 {
     DX_CALL(m_mainDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -149,12 +154,6 @@ void DX12RenderEngine::createCommandListAndSendInitialCommands()
     }
 }
 
-void DX12RenderEngine::createFence()
-{
-    m_mainDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_framesFence));
-    NAME_DX_OBJECT(m_framesFence, L"FrameFence");
-}
-
 void DX12RenderEngine::initializeDX12ImGui()
 {
     DescriptorHeap::Handle imguiFontHandle = m_resourceManager.getCBVHeap()->allocate();
@@ -162,11 +161,11 @@ void DX12RenderEngine::initializeDX12ImGui()
         m_resourceManager.getCBVHeap()->getID3D12DescriptorHeap(), imguiFontHandle.cpu, imguiFontHandle.gpu);
 }
 
-void DX12RenderEngine::beginFrame()
+uint64_t DX12RenderEngine::beginFrame()
 {
     const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
 
-    // wait until the gpu frees the next buffer
+    // wait until the gpu frees the next buffer (sync)
     const uint64_t currentFrameBufferFenceValue = m_frameBufferFenceValue[currentFrameBufferIndex];
     if (m_framesFence->GetCompletedValue() < currentFrameBufferFenceValue) {
         DX_CALL(m_framesFence->SetEventOnCompletion(currentFrameBufferFenceValue, m_eventHandle));
@@ -178,67 +177,23 @@ void DX12RenderEngine::beginFrame()
     DX_CALL(currentCommandAllocator->Reset());
     DX_CALL(m_commandList->Reset(currentCommandAllocator.Get(), nullptr));
 
-    auto& currentBuffer = m_resourceManager.getTexture("mainRT", currentFrameBufferIndex);
-
-    auto currentBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(currentBuffer.getID3D12Resource(),
-        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    m_commandList->ResourceBarrier(1, &currentBufferBarrier);
-
-    m_commandList->RSSetViewports(1, &m_screenViewport);
-    m_commandList->RSSetScissorRects(1, &m_screenScissor);
+    return currentFrameBufferIndex;
 }
 
 void DX12RenderEngine::endFrame()
 {
-    const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
-    auto& currentBuffer = m_resourceManager.getTexture("mainRT", currentFrameBufferIndex);
-    auto currentBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(currentBuffer.getID3D12Resource(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    m_commandList->ResourceBarrier(1, &currentBufferBarrier);
+    // send CommandBuffer on gpu (and signal for sync)
     DX_CALL(m_commandList->Close());
     ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(1, cmdLists);
-
     m_commandQueue->Signal(m_framesFence.Get(), m_currentFrame);
 
-    if (m_settings.doScreenShot) {
-        // wait until the gpu draw current buffer
-        const uint64_t currentFrameBufferFenceValue = m_currentFrame;
-        if (m_framesFence->GetCompletedValue() < currentFrameBufferFenceValue) {
-            DX_CALL(m_framesFence->SetEventOnCompletion(currentFrameBufferFenceValue, m_eventHandle));
-            WaitForSingleObject(m_eventHandle, INFINITE);
-        }
-
-
-        auto colorRT =  m_resourceManager.getTexture("colorMap", currentFrameBufferIndex).getID3D12Resource();
-        auto normalRT =  m_resourceManager.getTexture("normalMap", currentFrameBufferIndex).getID3D12Resource();
-        auto toCameraRT =  m_resourceManager.getTexture("toCameraMap", currentFrameBufferIndex).getID3D12Resource();
-
-        std::wstring suffix = std::to_wstring(m_settings.screenshotCounter); suffix += L".dds";
-        ++m_settings.screenshotCounter; 
-        std::wstring colorFileName    = MODEL_DATA_ROOT L"/colors/color"; colorFileName += suffix;
-        std::wstring normalFileName   = MODEL_DATA_ROOT L"/normals/normal"; normalFileName += suffix;
-        std::wstring toCameraFileName = MODEL_DATA_ROOT L"/toCameras/toCamera"; toCameraFileName += suffix;
-
-        DirectX::SaveDDSTextureToFile(
-            m_commandQueue.Get(), 
-            colorRT, colorFileName.c_str(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-        DirectX::SaveDDSTextureToFile(
-            m_commandQueue.Get(), 
-            normalRT, normalFileName.c_str(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-        DirectX::SaveDDSTextureToFile(
-            m_commandQueue.Get(), 
-            toCameraRT, toCameraFileName.c_str(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-        m_settings.doScreenShot = false;
-    }
+    // next frame
+    const uint64_t currentFrameBufferIndex = m_currentFrame % k_nSwapChainBuffers;
     m_frameBufferFenceValue[currentFrameBufferIndex] = m_currentFrame;
     ++m_currentFrame;
+
+    // show frame on screen
     DX_CALL(m_swapChain->Present(0, 0));
     DX_CALL(m_mainDevice->GetDeviceRemovedReason());
 }

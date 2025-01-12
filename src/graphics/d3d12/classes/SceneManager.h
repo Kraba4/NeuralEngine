@@ -7,6 +7,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <par_shapes.h>
 
 #include <unordered_map>
 
@@ -28,12 +29,22 @@ public:
         DirectX::XMFLOAT3 rotation = { 0, 0, 0 };
         float scale = 1.0f;
     };
-    void initialize(ID3D12Device* a_device);
-    void loadMesh(const char* a_meshName, const std::vector<Vertex>& a_vertices,
+    struct Object {
+        DirectX::XMFLOAT4X4 worldMatrix;
+        DirectX::XMFLOAT4 color;
+        size_t meshIndex;
+    };
+
+    void initialize(ID3D12Device* a_device, int a_numMeshes);
+    void loadParMesh(int a_meshId, const char* a_meshName, par_shapes_mesh* a_parMesh, bool a_needLoadUV = true,  bool a_needLoadNormals = true);
+    void loadMesh(int a_meshId, const char* a_meshName, const std::vector<Vertex>& a_vertices,
                   const std::vector<uint32_t>& a_indices,
                   MeshTransform a_transform = {});
-    void loadMeshFromFile(const char* a_meshName, const char* a_path, MeshTransform a_transform = {});
-    void uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList, ResourceManager* a_pResourceManager);
+    void loadMeshFromFile(int a_meshId, const char* a_meshName, const char* a_path, MeshTransform a_transform = {});
+    void uploadMeshesOnGPU(ID3D12GraphicsCommandList* a_commandList,
+                           ResourceManager* a_pResourceManager, 
+                           int a_vertexBufferId, int a_indexBufferId,
+                           int a_vertexBufferUploadId, int a_indexBufferUploadId);
 
     ID3D12Resource* getVertexBuffer() {
         return m_vertexBuffer.getID3D12Resource();
@@ -47,13 +58,42 @@ public:
     const D3D12_INDEX_BUFFER_VIEW& getIndexBufferView() const {
         return m_indexBufferView;
     }
-    const MeshInfo& getMeshInfo(const char* a_meshName) {
-        return m_meshes[a_meshName];
+
+    const MeshInfo& getMeshInfo(int a_meshId) {
+        assert(a_meshId < m_meshes.size());
+        return m_meshes[a_meshId];
+    }
+    const std::vector<Object>& getObjects() {
+        return m_objects;
+    }
+    Object& getObjectByName(std::string a_objectName) {
+        assert(m_objectNameToIndex.contains(a_objectName));
+        return m_objects[m_objectNameToIndex[a_objectName]];
+    }
+    void newObject(std::string a_name, int a_meshId, DirectX::XMFLOAT4 color, DirectX::XMFLOAT4X4 a_worldMatrix) {
+        assert(!m_objectNameToIndex.contains(a_name));
+        assert(a_meshId < m_meshes.size());
+        m_objectNameToIndex[a_name] = m_objects.size();
+        m_objects.push_back({a_worldMatrix, color, (size_t)a_meshId});
+    }
+
+    std::vector<const char*> getObjectNames() {
+        std::vector<const char*> names;
+        for (auto& pair : m_objectNameToIndex) {
+            // warning uses fact that m_objectNameToIndex reallocate not change string data
+            names.push_back(pair.first.c_str());
+        }
+        return names;
+    }
+    size_t numObjects() {
+        return m_objects.size();
     }
 private:
     ID3D12Device* m_device;
 
-    std::unordered_map<std::string, MeshInfo> m_meshes;
+    std::vector<Object> m_objects;
+    std::unordered_map<std::string, size_t> m_objectNameToIndex;
+    std::vector<MeshInfo> m_meshes;
     std::vector<Vertex> m_vertices;
     std::vector<uint32_t> m_indices;
 

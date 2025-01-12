@@ -225,5 +225,11 @@ DescriptorHeap::Handle Texture::getDSV() {
         return handle;
     }
 }
+
+DescriptorHeap::Handle Texture::createSRV(D3D12_SHADER_RESOURCE_VIEW_DESC a_desc) {
+    auto handle = m_srvUavHeap->allocate();
+    m_device->CreateShaderResourceView(m_resource.Get(), &a_desc, handle.cpu);
+    return handle;
+}
 #pragma endregion
 }

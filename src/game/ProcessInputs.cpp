@@ -11,10 +11,10 @@ void GameEngine::processInputs(const AppInput& a_appInput, double dt)
         m_pRenderSettings->showGUI = !m_pRenderSettings->showGUI;
     }
     if (a_appInput.keyPressed[GLFW_KEY_1]) {
-        m_pRenderSettings->meshName = "cat";
+        m_pRenderSettings->selectedMesh = 0;//M_Cat
     }
     if (a_appInput.keyPressed[GLFW_KEY_2]) {
-        m_pRenderSettings->meshName = "bird";
+        m_pRenderSettings->selectedMesh = 1;//M_Bird
     }
 	// if (a_appInput.keyPressed[GLFW_KEY_R]) {
 	// 	m_pRenderSettings->enableRotating = !m_pRenderSettings->enableRotating;

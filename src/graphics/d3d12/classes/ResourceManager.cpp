@@ -18,67 +18,76 @@ void ResourceManager::initialize(ID3D12Device* a_device, uint32_t a_nFrames,
     m_device = a_device;
 
     m_frameResources = std::move(std::make_unique<Resources[]>(a_nFrames));
+
     NAME_DX_OBJECT(m_cbvHeap.getID3D12DescriptorHeap(), L"mainSrvHeap");
 }
 
-ConstantBuffer& ResourceManager::createConstantBufferInFrame(std::string a_name, uint32_t a_frame, const ConstantBufferCreateInfo& a_createInfo)
+ConstantBuffer& ResourceManager::createConstantBufferInFrame(int a_bufferId, std::string a_debugName, uint32_t a_frame, const ConstantBufferCreateInfo& a_createInfo)
 {
-    assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken
+    assert(a_bufferId < m_frameResources[a_frame].m_constantBuffers.size());
 
-    m_frameResources[a_frame].m_constantBuffers[a_name] = {};
-    ConstantBuffer& constantBuffer = m_frameResources[a_frame].m_constantBuffers[a_name];
+    ConstantBuffer& constantBuffer = m_frameResources[a_frame].m_constantBuffers[a_bufferId];
     constantBuffer.initialize(m_device, a_createInfo, &m_cbvHeap);
 
-    std::wstring wName(a_name.begin(), a_name.end());
+    std::wstring wName(a_debugName.begin(), a_debugName.end());
     NAME_DX_OBJECT_INDEXED(constantBuffer.m_resource, wName, a_frame);
     return constantBuffer;
 }
-Buffer& ResourceManager::createBufferInUnique(std::string a_name, const BufferCreateInfo& a_createInfo)
+Buffer& ResourceManager::createBufferInUnique(int a_bufferId, std::string a_debugName, const BufferCreateInfo& a_createInfo)
 {
-    assert(!m_uniqueResources.m_buffers.contains(a_name)); // name is already taken
+    assert(a_bufferId < m_uniqueResources.m_buffers.size());
 
-    m_uniqueResources.m_buffers[a_name] = {};
-    Buffer& buffer = m_uniqueResources.m_buffers[a_name];
+    Buffer& buffer = m_uniqueResources.m_buffers[a_bufferId];
     buffer.initialize(m_device, &m_cbvHeap, a_createInfo);
 
-    std::wstring wName(a_name.begin(), a_name.end());
+    std::wstring wName(a_debugName.begin(), a_debugName.end());
     NAME_DX_OBJECT(buffer.m_resource, wName);
     
     return buffer;
 }
-Buffer& ResourceManager::createBufferInFrame(std::string a_name, uint32_t a_frame, const BufferCreateInfo& a_createInfo)
+Buffer& ResourceManager::createBufferInFrame(int a_bufferId, std::string a_debugName, uint32_t a_frame, const BufferCreateInfo& a_createInfo)
 {
-    assert(!m_frameResources[a_frame].m_buffers.contains(a_name)); // name is already taken
+    assert(a_bufferId < m_frameResources[a_frame].m_buffers.size());
 
-    m_frameResources[a_frame].m_buffers[a_name] = {};
-    Buffer& buffer = m_frameResources[a_frame].m_buffers[a_name];
+    Buffer& buffer = m_frameResources[a_frame].m_buffers[a_bufferId];
     buffer.initialize(m_device, &m_cbvHeap, a_createInfo);
 
-    std::wstring wName(a_name.begin(), a_name.end());
+    std::wstring wName(a_debugName.begin(), a_debugName.end());
     NAME_DX_OBJECT(buffer.m_resource, wName);
     
     return buffer;
 }
-Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, const TextureCreateInfo& a_createInfo)
+Texture& ResourceManager::createTextureInUnique(int a_textureId, std::string a_debugName, const TextureCreateInfo& a_createInfo)
 {
-    assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken
+    assert(a_textureId < m_uniqueResources.m_textures.size());
 
-    m_frameResources[a_frame].m_textures[a_name] = {};
-    Texture& texture = m_frameResources[a_frame].m_textures[a_name];
+    Texture& texture = m_uniqueResources.m_textures[a_textureId];
     texture.initialize(m_device, a_createInfo, &m_rtvHeap, &m_dsvHeap, &m_cbvHeap);
 
-    std::wstring wName(a_name.begin(), a_name.end());
+    std::wstring wName(a_debugName.begin(), a_debugName.end());
+    NAME_DX_OBJECT(texture.m_resource, wName);
+
+    return texture;
+}
+
+Texture& ResourceManager::createTextureInFrame(int a_textureId, std::string a_debugName, uint32_t a_frame, const TextureCreateInfo& a_createInfo)
+{
+    assert(a_textureId < m_frameResources[a_frame].m_textures.size());
+
+    Texture& texture = m_frameResources[a_frame].m_textures[a_textureId];
+    texture.initialize(m_device, a_createInfo, &m_rtvHeap, &m_dsvHeap, &m_cbvHeap);
+
+    std::wstring wName(a_debugName.begin(), a_debugName.end());
     NAME_DX_OBJECT_INDEXED(texture.m_resource, wName, a_frame);
 
     return texture;
 }
-Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_frame, ID3D12Resource* a_resource)
+Texture& ResourceManager::createTextureInFrame(int a_textureId, std::string a_debugName, uint32_t a_frame, ID3D12Resource* a_resource)
 {
     assert(m_device);
-    assert(!m_frameResources[a_frame].m_constantBuffers.contains(a_name)); // name is already taken
+    assert(a_textureId < m_frameResources[a_frame].m_textures.size());
 
-    m_frameResources[a_frame].m_textures[a_name] = {};
-    Texture& texture = m_frameResources[a_frame].m_textures[a_name];
+    Texture& texture = m_frameResources[a_frame].m_textures[a_textureId];
     D3D12_RESOURCE_DESC desc = a_resource->GetDesc();
     texture.m_device = m_device;
     texture.m_rtvHeap = &m_rtvHeap;
@@ -92,7 +101,7 @@ Texture& ResourceManager::createTextureInFrame(std::string a_name, uint32_t a_fr
     texture.m_dimension = desc.Dimension;
     texture.m_resource = a_resource;
 
-    std::wstring wName(a_name.begin(), a_name.end());
+    std::wstring wName(a_debugName.begin(), a_debugName.end());
     NAME_DX_OBJECT_INDEXED(texture.m_resource, wName, a_frame);
 
     return texture;

@@ -158,6 +158,10 @@ struct TextureCreateInfo {
 };
 class Texture {
 public:
+    struct Transition {
+        D3D12_RESOURCE_STATES from;
+        D3D12_RESOURCE_STATES to;
+    };
     void initialize(ID3D12Device* a_device, const TextureCreateInfo& a_createInfo,
      DescriptorHeap* a_rtvHeap, DescriptorHeap* a_dsvHeap, DescriptorHeap* a_srvUavHeap);
     ID3D12Resource* getID3D12Resource() const {
@@ -179,11 +183,16 @@ public:
     DXGI_FORMAT getFormat() const {
         return m_format;
     }
-
+    void applyBarrier(ID3D12GraphicsCommandList* a_commandList, Transition a_transition) {
+        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(getID3D12Resource(),
+            a_transition.from, a_transition.to);
+        a_commandList->ResourceBarrier(1, &barrier);
+    }
     struct ViewParams;
     DescriptorHeap::Handle getRTV();
     DescriptorHeap::Handle getRTV(uint32_t a_baseMip);
     DescriptorHeap::Handle getDSV();
+    DescriptorHeap::Handle createSRV(D3D12_SHADER_RESOURCE_VIEW_DESC a_desc);
 
     //DescriptorHeap::Handle getDSV(DSVParams) {
     //    ViewParams viewParams = { D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 0 };
